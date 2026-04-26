@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Customer-R1 深度解读 · 面向 1688→淘宝分销仿真</title>
+<style>
+  :root {
+    --bg: #0f1216;
+    --panel: #161b22;
+    --panel-2: #1c232d;
+    --border: #2a3441;
+    --text: #e6edf3;
+    --muted: #9aa7b2;
+    --accent: #5b8cff;
+    --accent-2: #7ee787;
+    --warn: #f0a14f;
+    --danger: #ff7b72;
+    --code-bg: #0b0f14;
+    --chip: #243041;
+    --chip-hi: #2a3b56;
+    --shadow: 0 6px 24px rgba(0,0,0,.35);
+  }
+  * { box-sizing: border-box; }
+  html, body { background: var(--bg); color: var(--text); margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft Yahei", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.7;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    color: #ffd580;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.92em;
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-size: 0.9em;
+  }
+  .container {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 32px 28px 96px;
+  }
+  header.hero {
+    padding: 32px 28px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: linear-gradient(180deg, #1a2331 0%, #141a22 100%);
+    box-shadow: var(--shadow);
+    margin-bottom: 28px;
+  }
+  header.hero h1 {
+    margin: 0 0 6px;
+    font-size: 26px;
+    letter-spacing: 0.3px;
+  }
+  header.hero .subtitle {
+    color: var(--muted);
+    font-size: 14px;
+  }
+  header.hero .meta {
+    margin-top: 14px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .chip {
+    display: inline-block;
+    padding: 4px 10px;
+    background: var(--chip);
+    color: var(--text);
+    border-radius: 999px;
+    font-size: 12px;
+    border: 1px solid var(--border);
+  }
+  .chip.accent { background: var(--chip-hi); color: #bcd0ff; }
+  .chip.good { background: #1e2f22; color: #9ee8a5; border-color: #2f5a39; }
+  .chip.warn { background: #2e2414; color: #ffd08a; border-color: #5a4323; }
+
+  nav.toc {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+  }
+  nav.toc h3 { margin: 0 0 8px; font-size: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px;}
+  nav.toc ol { margin: 0; padding-left: 22px; }
+  nav.toc li { margin: 3px 0; }
+
+  section.card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px 26px;
+    margin-bottom: 22px;
+    box-shadow: var(--shadow);
+  }
+  section.card h2 {
+    margin: 0 0 12px;
+    font-size: 20px;
+    border-left: 4px solid var(--accent);
+    padding-left: 10px;
+  }
+  section.card h3 {
+    margin: 18px 0 8px;
+    font-size: 16px;
+    color: #cfe1ff;
+  }
+  section.card h4 {
+    margin: 14px 0 6px;
+    font-size: 15px;
+    color: #d7e0ea;
+  }
+  .kvbox {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 6px 12px;
+    font-size: 14px;
+    margin-top: 4px;
+  }
+  .kvbox .k { color: var(--muted); }
+  .callout {
+    border-left: 3px solid var(--accent);
+    background: var(--panel-2);
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin: 12px 0;
+    font-size: 14.5px;
+  }
+  .callout.good { border-color: var(--accent-2); }
+  .callout.warn { border-color: var(--warn); }
+  .callout.danger { border-color: var(--danger); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 14px;
+    background: var(--panel-2);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  th, td {
+    border-bottom: 1px solid var(--border);
+    padding: 10px 12px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: #1e2732;
+    color: #bcd0ff;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+  tr:last-child td { border-bottom: none; }
+  td.num, th.num { text-align: right; }
+  .best { color: var(--accent-2); font-weight: 700; }
+
+  .formula {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.95em;
+    overflow-x: auto;
+    color: #e6edf3;
+    margin: 10px 0;
+  }
+
+  ul.clean, ol.clean { padding-left: 22px; }
+  ul.clean li, ol.clean li { margin: 6px 0; }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 820px) {
+    .two-col { grid-template-columns: 1fr; }
+    .kvbox { grid-template-columns: 1fr; }
+  }
+
+  .badge-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 2px; }
+
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+  .tag.blue { background: #1e2c46; color: #9ebcff; }
+  .tag.green { background: #1c3326; color: #8fe0a0; }
+  .tag.red { background: #3a1f22; color: #ff9e98; }
+  .tag.yellow { background: #3a2e14; color: #ffcf8a; }
+
+  footer {
+    color: var(--muted);
+    text-align: center;
+    font-size: 12px;
+    margin-top: 32px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header class="hero">
+    <h1>Customer-R1 深度解读</h1>
+    <div class="subtitle">
+      Personalized Simulation of Human Behaviors via RL-based LLM Agent in Online Shopping · NeurIPS 2025 Workshop on Multi-Turn Interactions · arXiv 2510.07230
+    </div>
+    <div class="meta">
+      <span class="chip accent">LLM Agent</span>
+      <span class="chip accent">RL · GRPO</span>
+      <span class="chip accent">User Behavior Simulation</span>
+      <span class="chip accent">Personalization</span>
+      <span class="chip good">适用：电商 Agent 仿真</span>
+      <span class="chip warn">作者：Northeastern U. + MSU + Amazon</span>
+    </div>
+    <div style="margin-top:12px; font-size:14px; color:var(--muted);">
+      作者：Ziyi Wang, Yuxuan Lu, Yimeng Zhang, Jing Huang, Dakuo Wang &nbsp;·&nbsp;
+      原文：<a href="https://arxiv.org/abs/2510.07230" target="_blank">arxiv.org/abs/2510.07230</a> &nbsp;·&nbsp;
+      HTML 版：<a href="https://arxiv.org/html/2510.07230v1" target="_blank">arxiv.org/html/2510.07230v1</a>
+    </div>
+  </header>
+
+  <nav class="toc">
+    <h3>目录</h3>
+    <ol>
+      <li><a href="#s1">一句话总结与速览</a></li>
+      <li><a href="#s2">问题定义：为什么已有方法不够用</a></li>
+      <li><a href="#s3">任务形式（输入 / 输出 / Action Space）</a></li>
+      <li><a href="#s4">Customer-R1 框架</a></li>
+      <li><a href="#s5">Reward 设计：难度加权 + 格式约束</a></li>
+      <li><a href="#s6">训练 Recipe 与 OPeRA 数据集</a></li>
+      <li><a href="#s7">主结果与关键消融</a></li>
+      <li><a href="#s8">论文的三句话精华</a></li>
+      <li><a href="#s9">局限与可被 claim 的改进点</a></li>
+      <li><a href="#s10">对 1688→淘宝 B2B 分销仿真的直接启发</a></li>
+    </ol>
+  </nav>
+
+  <!-- S1 -->
+  <section id="s1" class="card">
+    <h2>1. 一句话总结与速览</h2>
+    <div class="callout good">
+      <b>一句话：</b>把 <b>user persona</b> 从 "prompt 里的装饰" 升级为 <b>RL 真正要对齐的条件变量</b>，
+      用 <b>SFT 打底 + GRPO 微调</b>、配 <b>难度加权的可验证奖励</b>，训出一个真正"像某个具体用户"而不是"像平均用户"的购物行为仿真 agent。
+    </div>
+
+    <div class="kvbox">
+      <div class="k">任务</div><div>在线购物中，给定 user persona 和会话历史，<b>预测用户下一步动作</b>（step-wise next-action prediction）。</div>
+      <div class="k">Backbone</div><div>Qwen2.5-7B-Instruct-1M（长上下文版，65k tokens 上下文）。</div>
+      <div class="k">训练方式</div><div>SFT → GRPO（RL），verifiable reward。</div>
+      <div class="k">数据</div><div>OPeRA-filtered：49 个真实用户、5,856 条动作、207 条人工 rationale。</div>
+      <div class="k">对比基线</div><div>Zero-shot / SFT / RL-only / <b>SFT+RL（最优）</b>。</div>
+      <div class="k">核心收益</div><div>Next-Action 精确匹配 7.32% → <b class="best">39.58%</b>；Session Outcome F1 41.11% → <b class="best">79.45%</b>。</div>
+    </div>
+  </section>
+
+  <!-- S2 -->
+  <section id="s2" class="card">
+    <h2>2. 问题定义：为什么已有方法不够用</h2>
+    <p>
+      过去三条线的购物行为仿真都存在一个共同盲点——<b>只学"平均用户"的策略</b>：
+    </p>
+    <ul class="clean">
+      <li><b>Generative Agents (Park 2023)</b>：强调"可信"但没有定量对齐真实行为；</li>
+      <li><b>早期 SFT 方法 (Lu 2025a)</b>：在私有数据上做 supervised fine-tuning，不带 persona，复现性差；</li>
+      <li><b>Shop-R1 (Zhang 2025b)</b>：引入 RL 提升动作准确率，但同样没有 persona 条件；</li>
+      <li><b>OPeRA (Wang 2025b)</b>：把 persona 做进数据，但只做 prompting 评测，off-the-shelf 模型收益很小。</li>
+    </ul>
+    <div class="callout warn">
+      结果就是：<b>"同样的页面，不同的人会点不同的东西"</b> 这个最关键的个性化维度，没有被任何工作真正训进 policy。Customer-R1 的问题动机正是填这个空。
+    </div>
+  </section>
+
+  <!-- S3 -->
+  <section id="s3" class="card">
+    <h2>3. 任务形式</h2>
+    <h3>3.1 输入与输出</h3>
+    <p>一个购物会话 <code>j</code>，在第 <code>t</code> 步给定：</p>
+    <ul class="clean">
+      <li>历史动作 <code>a₁, a₂, ..., a_{t-1}</code></li>
+      <li>对应的 rationale <code>r₁, r₂, ..., r_{t-1}</code>（人工或合成的"为什么这样做"）</li>
+      <li>页面 HTML 观测序列 <code>o₁, o₂, ..., o_t</code></li>
+      <li>用户 persona <code>P_i</code>（人口学 + 人格 + 购物偏好，来自问卷+访谈）</li>
+    </ul>
+    <p>模型学习的函数：</p>
+    <div class="formula">
+      r<sub>t</sub>, a<sub>t</sub> = F( a<sub>1:t-1</sub>, r<sub>1:t-1</sub>, o<sub>1:t</sub>, P<sub>i</sub> )
+    </div>
+    <p>注意：<b>先输出 rationale，再输出 action</b>，整个是一个 JSON schema 结构化的单次生成。</p>
+
+    <h3>3.2 Action Space（简化但覆盖电商骨架）</h3>
+    <table>
+      <thead>
+        <tr><th>Action 类型</th><th>必需属性</th><th>示例</th><th>占比</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>click</code></td><td>element_name</td><td><code>click on "filter_price"</code></td><td>86.3%</td></tr>
+        <tr><td><code>input</code></td><td>element_name, text</td><td><code>type "earbuds" into search box</code></td><td>10.2%</td></tr>
+        <tr><td><code>terminate</code></td><td>—</td><td>结束会话（未购买）</td><td>3.6%</td></tr>
+      </tbody>
+    </table>
+
+    <h4>click 的 13 种细粒度子类</h4>
+    <div class="badge-row">
+      <span class="tag blue">review</span>
+      <span class="tag blue">search</span>
+      <span class="tag blue">product_option</span>
+      <span class="tag blue">product_link</span>
+      <span class="tag blue">purchase</span>
+      <span class="tag blue">nav_bar</span>
+      <span class="tag blue">page_related</span>
+      <span class="tag blue">quantity</span>
+      <span class="tag blue">suggested_term</span>
+      <span class="tag blue">cart_side_bar</span>
+      <span class="tag blue">cart_page_select</span>
+      <span class="tag blue">filter</span>
+      <span class="tag blue">other</span>
+    </div>
+    <p style="margin-top:6px;color:var(--muted);font-size:13px;">
+      细粒度类型后续在 reward 权重和评测里都会用到。
+    </p>
+  </section>
+
+  <!-- S4 -->
+  <section id="s4" class="card">
+    <h2>4. Customer-R1 框架</h2>
+    <p>整个 pipeline 可以拆成三层。</p>
+
+    <h3>4.1 输入层：Persona-grounded Prompting</h3>
+    <ul class="clean">
+      <li>把 persona 描述 <b>作为前缀</b> 拼进 prompt，并在指令里要求模型"按 persona 行为"。</li>
+      <li><b>关键工程细节</b>：明确写 "若 persona 和当前页面证据/任务目标冲突，以后者为准"，防止模型只顾人设而忽略页面事实。</li>
+      <li><b>长上下文处理</b>：HTML 很长，他们做了<b>动态截断</b>——最近几步保留完整 HTML，早期步骤只保留 action + rationale，整体压到 65k tokens 之内。</li>
+    </ul>
+
+    <h3>4.2 训练层：GRPO 目标</h3>
+    <p>用 DeepSeek 的 GRPO（不需要价值网络，用组内 rollout 的相对优势），目标函数是带 KL 正则的 clip objective：</p>
+    <div class="formula">
+J(θ) = E [ (1/G) Σᵢ (1/|oᵢ|) Σₜ min( rᵢ,ₜ(θ) · Ãᵢ ,&nbsp;
+              clip( rᵢ,ₜ(θ), 1−ε, 1+ε ) · Ãᵢ ) &nbsp;−&nbsp; β · D_KL( π_θ ‖ π_ref ) ]
+    </div>
+    <ul class="clean">
+      <li><code>G</code>：组内 rollout 个数；<code>Ãᵢ</code>：组内标准化的优势值；</li>
+      <li>对每一步 prompt 采样 <code>n</code> 个 rollout，每个 rollout 的 reward 按下面的公式算，再转成组内相对优势。</li>
+    </ul>
+
+    <h3>4.3 输出层：Rationale-then-Action（JSON schema）</h3>
+    <p>输出格式强制 "rationale 在前 + action 在后"，同时 rationale 不需要监督信号，只是 format reward 约束其存在。这等价于<b>软性注入 CoT</b>。</p>
+  </section>
+
+  <!-- S5 -->
+  <section id="s5" class="card">
+    <h2>5. Reward 设计（论文的工程精华）</h2>
+    <div class="formula">
+R = w(â) · R<sub>action</sub> &nbsp;+&nbsp; R<sub>format</sub>
+    </div>
+
+    <h3>5.1 Action Reward（exact match，很严）</h3>
+    <ul class="clean">
+      <li>只有当 <b>action type 与所有必需属性都完全命中</b> 时才给 1，否则 0。</li>
+      <li>对 click：必须同时命中 type 和 element_name；对 input：type、area、text 全对才得分。</li>
+    </ul>
+
+    <h3>5.2 Format Reward</h3>
+    <p>生成必须符合预定义 JSON schema（rationale + action），否则扣掉。</p>
+
+    <h3>5.3 难度加权 <code>w(â)</code>：对抗类别不平衡</h3>
+    <p>这是论文最值得借鉴的点。作者按动作的<b>稀有度和信息密度</b>拉开权重：</p>
+    <table>
+      <thead>
+        <tr><th>正确预测的动作</th><th class="num">权重（SFT+RL）</th><th>备注</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>input</code>（最稀少、最信息密集）</td><td class="num best">2000</td><td>文本输入，任务里最关键的行为之一</td></tr>
+        <tr><td>大多数 <code>click</code> 子类</td><td class="num">1000</td><td>中等难度</td></tr>
+        <tr><td><code>click: product_option</code></td><td class="num">10</td><td>中高频</td></tr>
+        <tr><td><code>click: review / search</code>（最高频）</td><td class="num">1</td><td>避免模型"什么都去点评论"</td></tr>
+        <tr><td><code>terminate</code></td><td class="num">1</td><td>中性退出</td></tr>
+        <tr><td>错误的 click</td><td class="num">−1</td><td>纯 RL 下会不稳，改为 0</td></tr>
+      </tbody>
+    </table>
+    <div class="callout good">
+      <b>直觉：</b>如果把 review/search 的奖励也给到 1000，模型会退化成 "看见什么都去点评论"。把高频动作压到 1、稀有动作抬到 2000，<b>强迫模型学什么时候该做那些稀有但关键的决定</b>。
+      这是 class imbalance 场景下很通用的 reward shaping 思路。
+    </div>
+  </section>
+
+  <!-- S6 -->
+  <section id="s6" class="card">
+    <h2>6. 训练 Recipe 与 OPeRA 数据集</h2>
+
+    <h3>6.1 数据：OPeRA-filtered</h3>
+    <table>
+      <tr><th>字段</th><th>值</th></tr>
+      <tr><td>用户数</td><td>49</td></tr>
+      <tr><td>动作总数</td><td>5,856</td></tr>
+      <tr><td>每会话平均动作</td><td>11.11</td></tr>
+      <tr><td>人工 rationale 数</td><td>207（其余用 <code>claude-3.5-sonnet</code> 合成补齐）</td></tr>
+      <tr><td>动作分布</td><td>click 86.3% / input 10.2% / terminate 3.6%</td></tr>
+    </table>
+    <div class="callout warn">
+      <b>Rationale augmentation</b>：标注缺失的 rationale 用 Claude 条件 "当前 HTML + 真实动作" 自动补齐，当作 SFT 的弱监督。这套做法 B2B 仿真里可以直接照抄。
+    </div>
+
+    <h3>6.2 训练设置</h3>
+    <div class="kvbox">
+      <div class="k">Backbone</div><div>Qwen2.5-7B-Instruct-1M（也实验了 3B，退化明显）</div>
+      <div class="k">Context</div><div>65k tokens（40k 会掉 6~10 个点）</div>
+      <div class="k">四种设置</div><div>Zero-shot / SFT / RL-only / <b>SFT+RL</b></div>
+      <div class="k">SFT</div><div>AdamW，lr=1e−5，150 warmup，2000 steps，batch=64，token-level CE</div>
+      <div class="k">RL</div><div>VERL + Megatron，tensor parallel + context parallel + activation checkpoint；2 epochs，batch=64</div>
+      <div class="k">算力</div><div>8×8 A100 80GB 集群（P4de）</div>
+    </div>
+    <div class="callout">
+      <b>注意：</b>纯 RL 冷启动不稳。作者的最稳配方是 <b>先 SFT 2000 步定位，再从 SFT 检查点初始化 GRPO 做 RL 精调</b>。
+    </div>
+  </section>
+
+  <!-- S7 -->
+  <section id="s7" class="card">
+    <h2>7. 主结果与关键消融</h2>
+
+    <h3>7.1 主表（Table 4，%）</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Method</th>
+          <th class="num">NextAct Acc</th>
+          <th class="num">Action Type Macro-F1</th>
+          <th class="num">Fine-grained Acc</th>
+          <th class="num">Session Outcome F1</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Zero-shot</td><td class="num">7.32</td><td class="num">33.43</td><td class="num">25.72</td><td class="num">41.11</td></tr>
+        <tr><td>RL-only</td><td class="num">24.72</td><td class="num">31.17</td><td class="num">39.58</td><td class="num">40.51</td></tr>
+        <tr><td>SFT</td><td class="num">35.14</td><td class="num">72.66</td><td class="num">56.43</td><td class="num">66.29</td></tr>
+        <tr><td><b>SFT + RL</b></td><td class="num best">39.58</td><td class="num best">78.50</td><td class="num best">61.20</td><td class="num best">79.45</td></tr>
+      </tbody>
+    </table>
+    <ul class="clean">
+      <li><b>顺序：SFT+RL &gt; SFT &gt; RL-only &gt; Zero-shot</b>。</li>
+      <li>纯 RL 冷启动只能做到 24.72%，说明奖励信号稀疏时必须 SFT 打底。</li>
+      <li>Zero-shot 仅 7.32%——这说明 <b>购物行为预测是 pretrain 知识覆盖不到的任务</b>。</li>
+    </ul>
+
+    <h3>7.2 Persona / Rationale 消融（Table 5，重点）</h3>
+    <p>在 <b>SFT+RL</b> 下，把 persona 或 rationale 拿掉：</p>
+    <table>
+      <thead>
+        <tr>
+          <th>设置</th>
+          <th class="num">NextAct</th>
+          <th class="num">Type Macro-F1</th>
+          <th class="num">Fine-grained</th>
+          <th class="num">Outcome F1</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>SFT+RL（全量）</td><td class="num best">39.58</td><td class="num best">78.50</td><td class="num best">61.20</td><td class="num best">79.45</td></tr>
+        <tr><td>w/o persona</td><td class="num">37.80</td><td class="num">66.67</td><td class="num">59.42</td><td class="num">59.73</td></tr>
+        <tr><td>w/o rationale</td><td class="num">34.15</td><td class="num">73.15</td><td class="num">53.99</td><td class="num">67.37</td></tr>
+      </tbody>
+    </table>
+    <div class="callout good">
+      <b>Persona 的价值在哪？</b> 不在"下一步点哪里"的局部准确率（只掉 1.78 个点），而在 <b>Macro-F1 掉 11.83</b>、<b>Session Outcome F1 掉 19.72</b>——也就是 <b>动作分布结构</b> 和 <b>最终是否下单</b>。
+      这意味着：想做"像某个具体人"的仿真，persona 必须真的被训进 policy。
+    </div>
+    <div class="callout">
+      <b>Rationale 是决策支架</b>：去掉 rationale 在所有 setting 下都掉点，说明 "先写原因再写动作" 对把页面上下文和决策绑定起来很有帮助。
+    </div>
+
+    <h3>7.3 规模与上下文长度（Table 6）</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Model</th><th>Context</th>
+          <th class="num">NextAct</th>
+          <th class="num">Type Macro-F1</th>
+          <th class="num">Fine-grained</th>
+          <th class="num">Outcome F1</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Qwen2.5-7B</td><td>65k</td><td class="num">24.72</td><td class="num">31.17</td><td class="num">39.58</td><td class="num">40.51</td></tr>
+        <tr><td>Qwen2.5-7B</td><td>40k</td><td class="num">18.85</td><td class="num">31.14</td><td class="num">28.60</td><td class="num">41.41</td></tr>
+        <tr><td>Qwen2.5-3B</td><td>65k</td><td class="num">18.07</td><td class="num">31.30</td><td class="num">38.91</td><td class="num" style="color:var(--danger);">3.97</td></tr>
+      </tbody>
+    </table>
+    <ul class="clean">
+      <li>7B：65k 对 40k，<b>NextAct 从 18.85 → 24.72，Fine-grained 28.60 → 39.58</b>，长上下文极其重要。</li>
+      <li>3B：Session Outcome F1 直接崩到 3.97%，说明 <b>"何时终止 / 何时下单" 这种全局决策对模型容量敏感</b>，不是 7B 以下能撑起来的。</li>
+    </ul>
+  </section>
+
+  <!-- S8 -->
+  <section id="s8" class="card">
+    <h2>8. 论文的三句话精华</h2>
+    <ol class="clean">
+      <li>把 <b>persona 从 prompt 装饰升级为 RL 真正优化的条件变量</b>，才能产出个体差异化的仿真。</li>
+      <li><b>难度加权的 exact-match reward</b> + <b>强制 JSON rationale-then-action</b> 是把稀疏、长尾、多模态 HTML 场景跑稳 RL 的关键工程心法。</li>
+      <li><b>SFT 打底 + GRPO 微调</b> 是这类 agent 仿真目前性价比最高的 recipe；Zero-shot 和纯 RL 都不成立。</li>
+    </ol>
+  </section>
+
+  <!-- S9 -->
+  <section id="s9" class="card">
+    <h2>9. 局限与可被 claim 的改进点</h2>
+    <ul class="clean">
+      <li><b>数据规模小</b>：仅 49 个用户、5856 条动作、场景单一（Amazon）。若你能拿到真实分销者日志 + 店铺画像，体量上就能做 novelty。</li>
+      <li><b>单用户 × 静态环境</b>：没有 agent 间交互。B2B 分销天然是 "供应商 ↔ 分销者 ↔ C 端买家" 的多边博弈，是 Customer-R1 的超集。</li>
+      <li><b>奖励只给 exact match</b>：<code>filter_price_asc</code> 和 <code>filter_price_desc</code> 都是筛选，但 exact 只给一边。B2B 可以上 soft reward / LLM-as-judge。</li>
+      <li><b>Reward 权重手工拍</b>：没有 adaptive curriculum。可引申为一个研究点：把难度权重学出来（RLAIF + meta-reward）。</li>
+      <li><b>Persona 文本静态</b>：用户偏好随交互演化，可以做 <b>动态 persona 更新</b>（类似 Generative Agents 的记忆-反思机制）。</li>
+    </ul>
+  </section>
+
+  <!-- S10 -->
+  <section id="s10" class="card">
+    <h2>10. 对 1688→淘宝 B2B 分销仿真的直接启发</h2>
+
+    <h3>10.1 Persona 定义需要 B2B 化扩展</h3>
+    <p>C 端 Customer-R1 的 persona 是 "人口学 + 人格 + 偏好"。B2B 分销者 persona 至少要覆盖：</p>
+    <ul class="clean">
+      <li>店铺规模、经营品类、历史毛利率偏好</li>
+      <li>选品来源偏好（纯搬运 / 选品 / 自有供应链）</li>
+      <li>风险偏好（库存 / 售后承受阈值）</li>
+      <li>铺货节奏（搬运型 / 精选型 / 直播型）</li>
+      <li>物流与合规敏感度（南北仓、报关、敏感词）</li>
+    </ul>
+    <div class="callout">这样 agent 才会真正表现成：<b>"同一个 1688 商品页，A 分销者果断铺货、B 分销者直接划走"</b>。</div>
+
+    <h3>10.2 Action Space 要比 C 端大</h3>
+    <table>
+      <thead><tr><th>类别</th><th>建议动作</th></tr></thead>
+      <tbody>
+        <tr><td>选品</td><td><code>search_1688</code>, <code>filter_by_price</code>, <code>filter_by_ship_from</code>, <code>add_to_dist_pool</code></td></tr>
+        <tr><td>铺货</td><td><code>list_to_taobao</code>（含定价/标题/主图策略）, <code>batch_relist</code></td></tr>
+        <tr><td>运营</td><td><code>adjust_price</code>, <code>adjust_sku</code>, <code>delist</code>, <code>set_promotion</code></td></tr>
+        <tr><td>议价</td><td><code>contact_supplier</code>（多轮子任务：询价 / 起订量 / 账期）</td></tr>
+        <tr><td>履约</td><td><code>accept_order</code>, <code>ship</code>, <code>handle_aftersale</code></td></tr>
+      </tbody>
+    </table>
+    <p>建议沿用 Customer-R1 的 schema 风格：每个 action 定义必要属性 + 示例 + 允许出现的页面上下文。</p>
+
+    <h3>10.3 Reward 直接套 "难度加权 exact match"</h3>
+    <p>在你场景下，稀有但关键的动作（对标 Customer-R1 的 <code>input</code>）应该是：</p>
+    <ul class="clean">
+      <li><b>高权重</b>（≈2000）：<code>contact_supplier</code> 的议价子任务、<code>list_to_taobao</code> 的定价动作</li>
+      <li><b>中权重</b>（≈1000）：大部分 <code>adjust_*</code>、<code>add_to_dist_pool</code></li>
+      <li><b>低权重</b>（≈1）：翻页、浏览详情等高频低信息动作</li>
+      <li><b>负奖励</b>：价格倒挂、违规选品（若能用规则判定）</li>
+    </ul>
+
+    <h3>10.4 Rationale-then-Action 在 B2B 更好用</h3>
+    <p>B2B 决策链条比 C 端长，rationale 能天然作为 <b>"毛利估算 → 供应稳定性 → SKU 冲突判断"</b> 的显性中间步骤。合成 rationale 直接用 <code>claude-3.5-sonnet</code> 或同级模型即可，和论文做法一致。</p>
+
+    <h3>10.5 训练 Recipe 建议</h3>
+    <ol class="clean">
+      <li><b>数据</b>：收集 N 名真实分销者的操作日志 + 店铺画像 + 访谈问卷，形成 persona 标注。</li>
+      <li><b>SFT 预热</b>：用 token-level CE 学习 "历史→动作" 的 base policy，至少覆盖高频动作。</li>
+      <li><b>GRPO 精调</b>：从 SFT checkpoint 起跑，用难度加权 exact match + format reward。</li>
+      <li><b>规模</b>：7B + 65k context 是论文验证可行的最小规模；8×A100 起步。</li>
+    </ol>
+
+    <h3>10.6 评测口径迁移</h3>
+    <p>论文的四个指标可以一对一映射：</p>
+    <table>
+      <thead><tr><th>Customer-R1</th><th>→ 1688→淘宝分销</th></tr></thead>
+      <tbody>
+        <tr><td>NextAct Exact Match</td><td>下一步动作（含属性）命中率</td></tr>
+        <tr><td>Action Type Macro-F1</td><td>分销动作类型分布一致性</td></tr>
+        <tr><td>Fine-grained Accuracy</td><td>细分动作（子类 / 子流程）命中率</td></tr>
+        <tr><td><b>Session Outcome F1</b></td><td><b>业务级结果</b>：是否"铺货 N 个新品 / 完成 M 次议价 / 促成 K 单成交"</td></tr>
+      </tbody>
+    </table>
+
+    <h3>10.7 可以直接成为一篇论文的切入点</h3>
+    <ul class="clean">
+      <li><b>单体 → 多边市场</b>：把 Customer-R1 扩展成 <b>"分销者 × 1688 供应商 × 淘宝买家"</b> 三方多 agent 仿真，研究补贴、协议变化的均衡效应。</li>
+      <li><b>静态 → 动态 persona</b>：让 persona 随交互更新，配合记忆/反思机制。</li>
+      <li><b>Exact → Semantic reward</b>：引入 LLM-as-judge 给语义等价动作软奖励。</li>
+      <li><b>行为 → 因果</b>：结合 causal trace，做 "1688 选品 → 淘宝转化" 的端到端反事实评估。</li>
+    </ul>
+  </section>
+
+  <footer>
+    解读文档 · 基于 arXiv 2510.07230 · 服务于 B2B 商业仿真研究
+  </footer>
+</div>
+</body>
+</html>
