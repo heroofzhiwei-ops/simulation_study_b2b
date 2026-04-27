@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>B2B 电商 Agent 仿真 —— 论文调研综述</title>
+<style>
+  :root {
+    --primary: #1f6feb;
+    --primary-dark: #0b3d91;
+    --accent: #ff6a00;
+    --bg: #f7f9fc;
+    --card: #ffffff;
+    --text: #1f2328;
+    --muted: #57606a;
+    --border: #d0d7de;
+    --tag-bg: #eaf2ff;
+    --tag-text: #0b3d91;
+    --code-bg: #f1f3f5;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                 "Hiragino Sans GB", "Microsoft YaHei", Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.65;
+  }
+  header {
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+    color: #fff;
+    padding: 48px 24px;
+    text-align: center;
+  }
+  header h1 { margin: 0 0 8px; font-size: 28px; font-weight: 700; }
+  header p  { margin: 0; opacity: 0.9; font-size: 15px; }
+
+  .container { max-width: 1080px; margin: 0 auto; padding: 24px; }
+
+  nav.toc {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 24px 0;
+  }
+  nav.toc h2 { margin: 0 0 10px; font-size: 16px; color: var(--primary-dark); }
+  nav.toc ul { list-style: none; padding: 0; margin: 0;
+               display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px 16px; }
+  nav.toc a { color: var(--text); text-decoration: none; font-size: 14px; }
+  nav.toc a:hover { color: var(--primary); }
+
+  section { margin: 40px 0; }
+  section > h2 {
+    font-size: 22px;
+    color: var(--primary-dark);
+    border-left: 4px solid var(--primary);
+    padding-left: 12px;
+    margin-bottom: 8px;
+  }
+  section > p.intro { color: var(--muted); margin-top: 0; font-size: 14px; }
+
+  .paper {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin: 16px 0;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+  .paper h3 {
+    margin: 0 0 6px;
+    font-size: 17px;
+    color: var(--text);
+  }
+  .paper .meta {
+    font-size: 13px; color: var(--muted); margin-bottom: 12px;
+  }
+  .paper .meta a { color: var(--primary); text-decoration: none; }
+  .paper .meta a:hover { text-decoration: underline; }
+  .tags { margin: 8px 0 12px; }
+  .tag {
+    display: inline-block;
+    background: var(--tag-bg);
+    color: var(--tag-text);
+    font-size: 12px;
+    padding: 2px 10px;
+    border-radius: 999px;
+    margin-right: 6px;
+    margin-bottom: 4px;
+  }
+  .paper h4 {
+    font-size: 14px;
+    color: var(--primary-dark);
+    margin: 12px 0 4px;
+  }
+  .paper ul { margin: 4px 0 8px 20px; padding: 0; }
+  .paper li { margin-bottom: 4px; }
+  .relevance {
+    background: #fff8ef;
+    border-left: 3px solid var(--accent);
+    padding: 8px 12px;
+    margin-top: 10px;
+    font-size: 14px;
+    border-radius: 4px;
+  }
+
+  table.summary {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--card);
+    border-radius: 10px;
+    overflow: hidden;
+    font-size: 13.5px;
+    border: 1px solid var(--border);
+  }
+  table.summary th, table.summary td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    vertical-align: top;
+  }
+  table.summary th {
+    background: #eef3fb;
+    color: var(--primary-dark);
+    font-weight: 600;
+  }
+  table.summary tr:last-child td { border-bottom: none; }
+
+  .framework-box {
+    background: var(--card);
+    border: 1px dashed var(--primary);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin: 16px 0;
+  }
+  .framework-box h3 { color: var(--primary-dark); margin-top: 0; }
+  .framework-box ol { margin: 8px 0 0 20px; padding: 0; }
+
+  code, .kbd {
+    background: var(--code-bg);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  footer {
+    background: #0d1117;
+    color: #c9d1d9;
+    text-align: center;
+    padding: 24px 16px;
+    font-size: 13px;
+    margin-top: 60px;
+  }
+  footer a { color: #58a6ff; text-decoration: none; }
+
+  @media (max-width: 700px) {
+    nav.toc ul { grid-template-columns: 1fr; }
+    header h1 { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>B2B 电商 Agent 仿真 · 论文调研综述</h1>
+  <p>面向"1688 分销 → 淘宝买家"业务链路的可参考研究工作</p>
+</header>
+
+<div class="container">
+
+<nav class="toc">
+  <h2>目录</h2>
+  <ul>
+    <li><a href="#overview">0. 总览：如何把这些论文对齐到你的场景</a></li>
+    <li><a href="#foundation">1. 基石工作：生成式 Agent 与人类行为仿真</a></li>
+    <li><a href="#ecommerce">2. 电商 / 购物场景的 Agent 仿真</a></li>
+    <li><a href="#recsys">3. 推荐系统用户仿真（User Simulator）</a></li>
+    <li><a href="#market">4. 市场 / 竞争 / 宏观经济的 Agent 仿真</a></li>
+    <li><a href="#supply">5. 供应链、分销、采购场景</a></li>
+    <li><a href="#negotiation">6. B2B 议价 / 协议 / 双边交易</a></li>
+    <li><a href="#alibaba">7. 阿里系相关工作（Virtual-Taobao 等）</a></li>
+    <li><a href="#compare">8. 对比速查表</a></li>
+    <li><a href="#design">9. 针对 1688→淘宝 分销场景的研究切入点建议</a></li>
+  </ul>
+</nav>
+
+<!-- ============== 0. OVERVIEW ============== -->
+<section id="overview">
+  <h2>0. 总览：如何把这些论文对齐到你的场景</h2>
+  <p class="intro">
+    你的目标是构建一个 B2B 电商仿真世界：一端是 <strong>1688 上的供应商 / 选品</strong>，
+    另一端是 <strong>淘宝店铺（或其他下游渠道）的分销买家</strong>，
+    中间是 <strong>分销者（reseller / dropshipper）</strong> 的决策行为，
+    用 Agent 拟合"选品 → 定价 → 上架 → 引流 → 转化 → 售后"整条链路。
+    现有研究可分为六条主线，它们分别给你提供不同的零件：
+  </p>
+
+  <div class="framework-box">
+    <h3>研究地图（对应你的仿真组件）</h3>
+    <ol>
+      <li><strong>Agent 架构</strong>（第 1 节）：生成式 Agent、记忆/反思/规划三件套 —— 回答"单个分销者/买家用什么认知结构"。</li>
+      <li><strong>购物行为拟真</strong>（第 2 节）：WebShop / Customer-R1 / Shop-R1 / PAARS —— 回答"如何让 Agent 的点击、加购、下单贴近真人分布"。</li>
+      <li><strong>推荐反馈闭环</strong>（第 3 节）：Agent4Rec / RecAgent / SimUSER / RecoWorld —— 回答"平台推荐如何影响 Agent 决策、在线指标如何评估"。</li>
+      <li><strong>市场与竞争动力学</strong>（第 4 节）：CompeteAI / EconAgent / AgentSociety / TwinMarket —— 回答"多个分销者竞争同一批货、价格战、羊群行为"。</li>
+      <li><strong>供应链 / 采购</strong>（第 5 节）：InvAgent / Agentic Supply Chain / LLM-MAS —— 回答"库存、补货、牛鞭效应、断货"。</li>
+      <li><strong>议价与双边交易</strong>（第 6 节）：Magentic Marketplace / AgenticPay / PIRASA —— 回答"分销者与 1688 供应商议价、选择协议"。</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============== 1. FOUNDATION ============== -->
+<section id="foundation">
+  <h2>1. 基石工作：生成式 Agent 与人类行为仿真</h2>
+
+  <div class="paper">
+    <h3>Generative Agents: Interactive Simulacra of Human Behavior</h3>
+    <div class="meta">
+      Park et al., Stanford · UIST 2023 ·
+      <a href="https://arxiv.org/abs/2304.03442" target="_blank">arXiv:2304.03442</a>
+    </div>
+    <div class="tags">
+      <span class="tag">生成式 Agent</span><span class="tag">记忆-反思-规划</span><span class="tag">可信行为</span>
+    </div>
+    <h4>核心内容</h4>
+    <ul>
+      <li>提出"可信人类行为仿真"的经典三件套架构：<em>Memory Stream（自然语言日志）+ Reflection（高层摘要）+ Planning（日程规划）</em>。</li>
+      <li>在类 Sims 沙盒里放 25 个 Agent，涌现出传播消息、组织生日派对等社会行为。</li>
+      <li>消融显示 observation / planning / reflection 三者缺一不可（全架构 vs 基线效应量 d=8.16）。</li>
+    </ul>
+    <div class="relevance">
+      <strong>对你的启发：</strong>分销者 Agent 的"每日决策日志 + 周度复盘 + 选品计划"可以直接套用这套三层结构；淘宝买家 Agent 的长期偏好演化也可以靠 Reflection 建模。
+    </div>
+  </div>
+</section>
+
+<!-- ============== 2. ECOMMERCE ============== -->
+<section id="ecommerce">
+  <h2>2. 电商 / 购物场景的 Agent 仿真</h2>
+  <p class="intro">这一类是离你最近的工作——都是"给 LLM 一个电商环境，让它像人一样购物"。</p>
+
+  <div class="paper">
+    <h3>WebShop: Towards Scalable Real-World Web Interaction with Grounded Language Agents</h3>
+    <div class="meta">
+      Yao et al., Princeton · NeurIPS 2022 ·
+      <a href="https://arxiv.org/abs/2207.01206" target="_blank">arXiv:2207.01206</a>
+    </div>
+    <div class="tags"><span class="tag">电商环境基准</span><span class="tag">Sim-to-Real</span><span class="tag">RL / IL</span></div>
+    <h4>核心内容</h4>
+    <ul>
+      <li>构建含 118 万真实商品、12,087 条人类指令的仿真电商站；Agent 须在搜索/结果/详情页间跳转完成购买。</li>
+      <li>最好模型成功率 29%（人类 59%），但在 Amazon/eBay 上显示出非平凡的迁移能力。</li>
+    </ul>
+    <div class="relevance">
+      <strong>对你的启发：</strong>淘宝买家 Agent 的"搜索—筛选—详情—下单"行为基准可以复刻；你可以在 1688 商品结构上造一个类似的 <em>WebShop-B2B</em>。
+    </div>
+  </div>
+
+  <div class="paper">
+    <h3>Customer-R1: Personalized Simulation of Human Behaviors via RL-based LLM Agent</h3>
+    <div class="meta">
+      Amazon · 2025 ·
+      <a href="https://arxiv.org/abs/2510.07230" target="_blank">arXiv:2510.07230</a>
+    </div>
+    <div class="tags"><span class="tag">个性化</span><span class="tag">RL</span><span class="tag">Persona 条件化</span></div>
+    <h4>核心内容</h4>
+    <ul>
+      <li>指出已有方法只学"人群级策略"，Customer-R1 用 RL 让 Agent 以 <em>显式用户画像</em> 为条件生成行为。</li>
+      <li>逐步（step-wise）奖励信号，显著优于 Prompting 与 SFT 基线。</li>
+    </ul>
+    <div class="relevance">
+      <strong>对你的启发：</strong>分销买家不是一个群体而是多种画像（新手店主 / 爆品猎手 / 批量分销商），Customer-R1 的"画像条件化 + RL 奖励"是标准做法。
+    </div>
+  </div>
+
+  <div class="paper">
+    <h3>Shop-R1: Rewarding LLMs to Simulate Human Behavior in Online Shopping</h3>
+    <div class="meta">
+      ICLR 2026 · <a href="https://arxiv.org/abs/2507.17842" target="_blank">arXiv:2507.17842</a>
+    </div>
+    <div class="tags"><span class="tag">分层奖励</span><span class="tag">理由+动作分解</span></div>
+    <h4>核心内容</h4>
+    <ul>
+      <li>把"行为模拟"拆成 <em>Rationale Generation</em>（为什么这么做）+ <em>Action Prediction</em>（做什么），分层奖励。</li>
+      <li>相对基线取得 65%+ 的提升。</li>
+    </ul>
+    <div class="relevance">
+      <strong>对你的启发：</strong>分销者决策本质就是"看到选品 → 写进货理由 → 执行加购"，Shop-R1 的双阶段奖励几乎天然贴合 B2B 选品链路。
+    </div>
+  </div>
+
+  <div class="paper">
+    <h3>PAARS: Persona Aligned Agentic Retail Shoppers</h3>
+    <div class="meta">
+      ACL REALM 2025 · <a href="https://aclanthology.org/2025.realm-1.11/" target="_blank">aclanthology.org</a>
+    </div>
+    <div class="tags"><span class="tag">Persona 挖掘</span><span class="tag">种群分布对齐</span><span class="tag">A/B Test</span></div>
+    <h4>核心内容</h4>
+    <ul>
+      <li>从匿名购物日志中 <em>自动挖掘 Persona</em>，给 Agent 配上零售专用工具（search / view / purchase）。</li>
+      <li>强调 <em>种群级（population-level）分布对齐</em>，而不是单个用户像不像，配套 A/B 测试工具。</li>
+    </ul>
+    <div class="relevance">
+      <strong>对你的启发：</strong>做 B2B 仿真通常没有大量公开数据，PAARS 的"从日志反推 Persona + 分布对齐"思路可直接用来评价你 1688 买家仿真的拟真度。
+    </div>
+  </div>
+
+  <div class="paper">
+    <h3>LLM-Based Multi-Agent System for Simulating Marketing and Consumer Behavior</h3>
+    <div class="meta">
+      IEEE ICEBE 2025 · <a href="https://arxiv.org/abs/2510.18155" target="_blank">arXiv:2510.18155</a>
+    </div>
+    <div class="tags"><span class="tag">营销策略测试</span><span class="tag">涌现社交模式</span></div>
+    <h4>核心内容</h4>
+    <ul>
+      <li>生成式 Agent 无预设规则地相互交互、形成习惯、完成购买。</li>
+      <li>用于营销策略上线前的离线评估（pre-implementation strategy testing）。</li>
+    </ul>
+    <div class="relevance">
+      <strong>对你的启发：</strong>阿里体系里常有"运营策略上线前想先仿真"的需求——该工作的目标函数与你最接近。
+    </div>
+  </div>
+</section>
+
+<!-- ============== 3. RECSYS ============== -->
+<section id="recsys">
+  <h2>3. 推荐系统用户仿真（User Simulator）</h2>
+  <p class="intro">1688 和淘宝都是强推荐驱动，仿真买家不能脱离"推荐—反馈"闭环。</p>
+
+  <div class="paper">
+    <h3>On Generative Agents in Recommendation (Agent4Rec)</h3>
+    <div class="meta">
+      Zhang et al., THU · SIGIR 2024 ·
+      <a href="https://arxiv.org/abs/2310.10108" target="_blank">arXiv:2310.10108</a> ·
+      <a href="https://github.com/LehengTHU/Agent4Rec" target="_blank">GitHub</a>
+    </div>
+    <div class="tags"><span class="tag">1000 Agent</span><span class="tag">User Profile + Memory + Action</span></div>
+    <h4>核心内容</h4>
+    <ul>
+      <li>用 MovieLens-1M 初始化 1000 个 Agent，逐页与推荐器交互（观看、评分、评估）。</li>
+      <li>证明在"离线指标 vs 真实在线反馈"之间搭桥是可行的。</li>
+    </ul>
+    <div class="relevance">
+      <strong>对你的启发：</strong>把淘宝买家的历史订单 / 收藏作为 Profile 种子，复刻该架构用来评估 1688 推荐或选品工具。
+    </div>
+  </div>
+
+  <div class="paper">
+    <h3>RecAgent: A Novel Simulation Paradigm for Recommender Systems</h3>
+    <div class="meta">
+      RUC · 2023 · <a href="https://arxiv.org/abs/2306.02552" target="_blank">arXiv:2306.02552</a>
+    </div>
+    <div class="tags"><span class="tag">社交传播</span><span class="tag">系统干预</span></div>
+    <h4>核心内容</h4>
+    <ul>
+      <li>包括 User 模块（浏览、交流、发社媒）和 Recommender 模块。</li>
+      <li>显式建模"外部因素"：好友对话、社交广告，让仿真不局限于系统内。</li>
+    </ul>
+    <div class="relevance">
+      <strong>对你的启发：</strong>分销者之间的"抄爆品"、群聊种草等外部社交影响，RecAgent 的框架可直接借鉴。
+    </div>
+  </div>
+
+  <div class="paper">
+    <h3>SimUSER: Simulating User Behavior with Large Language Models for Recommender System Evaluation</h3>
+    <div class="meta">
+      2024 · <a href="https://arxiv.org/abs/2504.12722" target="_blank">arXiv:2504.12722</a>
+    </div>
+    <div class="tags"><span class="tag">自洽 Persona</span><span class="tag">真实 A/B 验证</span></div>
+    <h4>核心内容</h4>
+    <ul>
+      <li>从历史数据中 <em>识别自洽 Persona</em>，Agent 具有 persona / memory / perception / brain 四模块。</li>
+      <li>在微观（点击）和宏观（整体分布）两个层级都与真人更贴近，并经过真实 A/B 测试验证。</li>
+    </ul>
+    <div class="relevance">
+      <strong>对你的启发：</strong>对仿真真实度的衡量，不应只看 perplexity / 命中率，而要看宏观分布 —— 与 PAARS 异曲同工。
+    </div>
+  </div>
+
+  <div class="paper">
+    <h3>RecoWorld: Building Simulated Environments for Agentic Recommender Systems</h3>
+    <div class="meta">
+      2025 · <a href="https://arxiv.org/abs/2509.10397" target="_blank">arXiv:2509.10397</a>
+    </div>
+    <div class="tags"><span class="tag">Dual-view</span><span class="tag">多模态表示</span><span class="tag">语义 ID</span></div>
+    <h4>核心内容</h4>
+    <ul>
+      <li><em>Dual-view</em>：同时仿真用户 Agent 与 Agentic 推荐器，在多轮交互中互相塑形。</li>
+      <li>支持文本 / 多模态 / Semantic-ID 三种内容表示，支持针对特定人群的多 Agent 仿真。</li>
+    </ul>
+    <div class="relevance">
+      <strong>对你的启发：</strong>1688 的商品信息既有结构化属性又有图文，RecoWorld 的多表征设计对淘宝/1688 都很契合。
+    </div>
+  </div>
+</section>
+
+<!-- ============== 4. MARKET ============== -->
+<section id="market">
+  <h2>4. 市场 / 竞争 / 宏观经济的 Agent 仿真</h2>
+
+  <div class="paper">
+    <h3>CompeteAI: Understanding the Competition Dynamics of LLM-based Agents</h3>
+    <div class="meta">
+      Microsoft Research · ICML 2024 Oral ·
+      <a href="https://arxiv.org/abs/2310.17512" target="_blank">arXiv:2310.17512</a> ·
+      <a href="https://github.com/microsoft/competeai" target="_blank">GitHub</a>
+    </div>
+    <div class="tags"><span class="tag">餐厅/顾客竞争</span><span class="tag">涌现策略</span></div>
+    <h4>核心内容</h4>
+    <ul>
+      <li>虚拟小镇中多家餐厅 Agent 竞争，顾客 Agent 做选择。</li>
+      <li>发现竞争促使 Agent 自发产生策略创新，仿真结果与营销/社会学理论吻合。</li>
+    </ul>
+    <div class="relevance">
+      <strong>对你的启发：</strong>多个分销者同时卖"相似 1688 货源"的价格战、差异化定位，可直接改写成 CompeteAI 的多方博弈。
+    </div>
+  </div>
+
+  <div class="paper">
+    <h3>EconAgent: LLM-Empowered Agents for Simulating Macroeconomic Activities</h3>
+    <div class="meta">
+      THU · ACL 2024 ·
+      <a href="https://arxiv.org/abs/2310.10436" target="_blank">arXiv:2310.10436</a>
+    </div>
+    <div class="tags"><span class="tag">异质 Agent</span><span class="tag">宏观指标</span></div>
+    <h4>核心内容</h4>
+    <ul>
+      <li>把 Perception + Memory + Reflection 移植到宏观经济 ABM，替换传统刚性规则。</li>
+      <li>能仿真失业率、通胀、消费曲线，相比规则/神经网络更真实。</li>
+    </ul>
+    <div class="relevance">
+      <strong>对你的启发：</strong>若你想回答"平台补贴 / 佣金调整会如何影响整条分销生态"，EconAgent 是最接近的范式。
+    </div>
+  </div>
+
+  <div class="paper">
+    <h3>AgentSociety: Large-Scale Simulation of LLM-Driven Generative Agents</h3>
+    <div class="meta">
+      THU-FIB · 2025 ·
+      <a href="https://arxiv.org/abs/2502.08691" target="_blank">arXiv:2502.08691</a> ·
+      <a href="https://github.com/tsinghua-fib-lab/agentsociety" target="_blank">GitHub</a>
+    </div>
+    <div class="tags"><span class="tag">10k Agent</span><span class="tag">心理学理论</span><span class="tag">社会实验台</span></div>
+    <h4>核心内容</h4>
+    <ul>
+      <li>10,000+ Agent、500 万+ 交互，内建 Maslow 需求层次、TPB（计划行为理论）等心理模型。</li>
+      <li>已在极化、谣言传播、UBI 政策、极端天气冲击四类场景与真实实验吻合。</li>
+    </ul>
+    <div class="relevance">
+      <strong>对你的启发：</strong>若要做"大盘级"的分销生态仿真（而非只模 100 个买家），AgentSociety 提供了现成基建 + 调研工具（问卷、访谈、干预）。
+    </div>
+  </div>
+
+  <div class="paper">
+    <h3>TwinMarket: A Scalable Behavioral and Social Simulation for Financial Markets</h3>
+    <div class="meta">
+      2025 · <a href="https://arxiv.org/abs/2502.01506" target="_blank">arXiv:2502.01506</a>
+    </div>
+    <div class="tags"><span class="tag">涌现泡沫</span><span class="tag">行为经济学</span></div>
+    <h4>核心内容</h4>
+    <ul>
+      <li>LLM 多 Agent 模拟金融市场，个体行为涌现出泡沫、衰退等宏观现象。</li>
+      <li>显式考虑认知偏差、情绪等行为经济因素。</li>
+    </ul>
+    <div class="relevance">
+      <strong>对你的启发：</strong>淘宝分销市场里常见的"跟风爆品—集中进货—库存崩盘"与金融泡沫同构，TwinMarket 的分析工具可迁移。
+    </div>
+  </div>
+</section>
+
+<!-- ============== 5. SUPPLY ============== -->
+<section id="supply">
+  <h2>5. 供应链、分销、采购场景</h2>
+
+  <div class="paper">
+    <h3>InvAgent: LLM-based Multi-Agent System for Inventory Management</h3>
+    <div class="meta">
+      Georgia Tech · 2024 · <a href="https://arxiv.org/abs/2407.11384" target="_blank">arXiv:2407.11384</a>
+    </div>
+    <div class="tags"><span class="tag">多级库存</span><span class="tag">Zero-shot</span><span class="tag">CoT 可解释</span></div>
+    <h4>核心内容</h4>
+    <ul>
+      <li>多 Agent 分别代表供应链各层级，协调补货决策。</li>
+      <li>强调零样本适应能力与链式思维可解释。</li>
+    </ul>
+    <div class="relevance">
+      <strong>对你的启发：</strong>"1688 供应商 ← 分销者 ← 淘宝店铺"的多级库存/账期场景，InvAgent 基本同构。
+    </div>
+  </div>
+
+  <div class="paper">
+    <h3>Agentic Supply Chain Simulation: Hybrid ABM + LLM-Orchestrated Agents</h3>
+    <div class="meta">
+      2024/2025 · 会议论文
+    </div>
+    <div class="tags"><span class="tag">ABM+LLM 混合</span><span class="tag">上下文推理</span></div>
+    <h4>核心内容</h4>
+    <ul>
+      <li>保留传统 ABM 的结构化约束，LLM Agent 负责非规则决策与工具调用。</li>
+      <li>超越预设规则式的供应链决策。</li>
+    </ul>
+    <div class="relevance">
+      <strong>对你的启发：</strong>经典方法（库存 EOQ、Lead Time）与 LLM 的"直觉式"判断如何结合 —— 这是你落地的关键工程问题。
+    </div>
+  </div>
+
+  <div class="paper">
+    <h3>Agentic LLMs in the Supply Chain: Towards Autonomous Multi-Agent Consensus-Seeking</h3>
+    <div class="meta">
+      2024 · 见 PapersWithCode
+    </div>
+    <div class="tags"><span class="tag">牛鞭效应</span><span class="tag">共识协议</span></div>
+    <h4>核心内容</h4>
+    <ul>
+      <li>探索 LLM Agent 在多级供应链中通过对话自治达成共识（库存水位、交付时间）。</li>
+      <li>关注如何抑制牛鞭效应。</li>
+    </ul>
+    <div class="relevance">
+      <strong>对你的启发：</strong>1688 与分销者之间的库存预警、集单合批机制，可以用"共识协议"建模。
+    </div>
+  </div>
+
+  <div class="paper">
+    <h3>The Collaboration Paradox in Multi-echelon Supply Chains (LLM Agents)</h3>
+    <div class="meta">
+      2025 · <a href="https://arxiv.org/abs/2508.13942" target="_blank">arXiv:2508.13942</a>
+    </div>
+    <div class="tags"><span class="tag">协作反悖</span><span class="tag">分层策略</span></div>
+    <h4>核心内容</h4>
+    <ul>
+      <li>发现"理论上更聪明的协作 Agent 反而输给非 AI 基线"——因为协作缺乏稳定执行层。</li>
+      <li>解决方案：高层 AI 设策略，低层协作执行。</li>
+    </ul>
+    <div class="relevance">
+      <strong>对你的启发：</strong>提醒你不要只盯着"Agent 智商"，仿真要显式区分"策略层"和"执行层"。
+    </div>
+  </div>
+</section>
+
+<!-- ============== 6. NEGOTIATION ============== -->
+<section id="negotiation">
+  <h2>6. B2B 议价 / 协议 / 双边交易</h2>
+
+  <div class="paper">
+    <h3>Magentic Marketplace: An Open-Source Environment for Studying Agentic Markets</h3>
+    <div class="meta">
+      Microsoft Research · 2025 ·
+      <a href="https://microsoft.github.io/multi-agent-marketplace/" target="_blank">项目主页</a> ·
+      <a href="https://github.com/microsoft/multi-agent-marketplace" target="_blank">GitHub</a>
+    </div>
+    <div class="tags"><span class="tag">Assistant vs Service</span><span class="tag">福利/公平/效率</span><span class="tag">操纵攻击</span></div>
+    <h4>核心内容</h4>
+    <ul>
+      <li>双边市场：Assistant Agent 代表消费者，Service Agent 代表商家。</li>
+      <li>提供福利、公平、效率、搜索机制影响等评估指标。</li>
+      <li>发现前沿 LLM 在理想搜索条件下可接近最优福利，但规模一上去性能崩；普遍存在"首提议偏置"，导致响应快而差反而有 10–30x 优势。</li>
+    </ul>
+    <div class="relevance">
+      <strong>对你的启发：</strong>1688 分销找货的"谁先回消息谁接单"现象几乎就是 first-proposal bias 的现实对应，可做一篇针对性的实证对照。
+    </div>
+  </div>
+
+  <div class="paper">
+    <h3>AgenticPay: A Multi-Agent LLM Negotiation System for Buyer–Seller Transactions</h3>
+    <div class="meta">
+      2026 · <a href="https://arxiv.org/abs/2602.06008" target="_blank">arXiv:2602.06008</a>
+    </div>
+    <div class="tags"><span class="tag">1-to-1 / 1-to-N / N-to-N</span><span class="tag">自然语言议价</span></div>
+    <h4>核心内容</h4>
+    <ul>
+      <li>支持 1对1、1对多、多对多三种议价设置，共 110+ 任务。</li>
+      <li>评估指标涵盖可行性、效率、社会福利。</li>
+      <li>关键结论：长时序战略推理仍是 LLM 的瓶颈。</li>
+    </ul>
+    <div class="relevance">
+      <strong>对你的启发：</strong>分销者与 1688 供应商的批量议价、定制议价、多供应商比价，几乎一一对应 AgenticPay 的三种模式。
+    </div>
+  </div>
+
+  <div class="paper">
+    <h3>PIRASA: Strategic Protocol Selection for E-commerce Agents</h3>
+    <div class="meta">
+      Electronic Markets · 2018 ·
+      <a href="https://link.springer.com/article/10.1007/s12525-018-0307-4" target="_blank">Springer</a>
+    </div>
+    <div class="tags"><span class="tag">协议选择</span><span class="tag">销售/拍卖/议价</span></div>
+    <h4>核心内容</h4>
+    <ul>
+      <li>买方 Agent 在销售、拍卖、谈判三种协议间动态选择，以最大化效用。</li>
+      <li>建模了预算、截止时间、个性等约束。</li>
+    </ul>
+    <div class="relevance">
+      <strong>对你的启发：</strong>1688 上有"直拍 / 议价 / 专供 / 分销代发"多种购销协议，PIRASA 是一个偏传统但清晰的多协议决策范式。
+    </div>
+  </div>
+</section>
+
+<!-- ============== 7. ALIBABA ============== -->
+<section id="alibaba">
+  <h2>7. 阿里系相关工作</h2>
+
+  <div class="paper">
+    <h3>Virtual-Taobao: Virtualizing Real-World Online Retail Environment for RL</h3>
+    <div class="meta">
+      Shi et al., Alibaba + 南大 · AAAI 2019 ·
+      <a href="https://ojs.aaai.org/index.php/AAAI/article/view/4419" target="_blank">AAAI</a>
+    </div>
+    <div class="tags"><span class="tag">GAN-SD</span><span class="tag">MAIL</span><span class="tag">ANC</span></div>
+    <h4>核心内容</h4>
+    <ul>
+      <li>从数亿真实淘宝交互记录学出一个"虚拟淘宝"供 RL 训练。</li>
+      <li>三项关键技术：GAN-SD（分布仿真）、MAIL（多智能体对抗模仿学习）、ANC（动作范数约束防过拟合）。</li>
+      <li>在真实 A/B 上显著优于纯监督方法。</li>
+    </ul>
+    <div class="relevance">
+      <strong>对你的启发：</strong>做 1688-淘宝仿真，Virtual-Taobao 是最硬核、最直接的先例，它告诉你"分布对齐 + 动作约束"是真实转化的关键。
+    </div>
+  </div>
+
+  <div class="paper">
+    <h3>ShopSimulator / 电商 Agent 训练环境（阿里相关）</h3>
+    <div class="meta">
+      2024+ · 中文电商 Agent benchmark
+    </div>
+    <div class="tags"><span class="tag">中文电商</span><span class="tag">多轮对话</span><span class="tag">SFT+RL</span></div>
+    <h4>核心内容</h4>
+    <ul>
+      <li>面向中文电商，覆盖个性化搜索、多轮对话、商品辨别。</li>
+      <li>SFT + RL 的训练流水线。</li>
+    </ul>
+    <div class="relevance">
+      <strong>对你的启发：</strong>中文场景（含 1688 的专业术语、分销黑话）的直接参考。
+    </div>
+  </div>
+</section>
+
+<!-- ============== 8. COMPARE ============== -->
+<section id="compare">
+  <h2>8. 对比速查表</h2>
+  <table class="summary">
+    <thead>
+      <tr>
+        <th>论文</th><th>场景</th><th>Agent 数量级</th><th>核心贡献点</th><th>与你场景贴合度</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Generative Agents (Park 2023)</td><td>小镇沙盒</td><td>25</td><td>记忆/反思/规划</td><td>★★★ 架构基石</td></tr>
+      <tr><td>WebShop</td><td>仿真电商站</td><td>单 Agent</td><td>基准 + Sim2Real</td><td>★★★★ 直接可改</td></tr>
+      <tr><td>Customer-R1</td><td>在线购物</td><td>多画像</td><td>Persona 条件化 RL</td><td>★★★★★ 分销买家拟真</td></tr>
+      <tr><td>Shop-R1</td><td>在线购物</td><td>多</td><td>理由 + 动作双阶段奖励</td><td>★★★★★ 分销决策</td></tr>
+      <tr><td>PAARS</td><td>零售</td><td>种群</td><td>Persona 挖掘 + 分布对齐</td><td>★★★★★ 评估方法</td></tr>
+      <tr><td>Agent4Rec</td><td>推荐</td><td>1,000</td><td>用户模拟器评估推荐</td><td>★★★★ 推荐闭环</td></tr>
+      <tr><td>RecAgent</td><td>推荐 + 社交</td><td>1,000</td><td>引入社交影响</td><td>★★★★ 社交种草</td></tr>
+      <tr><td>SimUSER</td><td>推荐</td><td>-</td><td>自洽 Persona + 真实 A/B</td><td>★★★★</td></tr>
+      <tr><td>RecoWorld</td><td>Agentic 推荐</td><td>-</td><td>Dual-view + 多模态</td><td>★★★★</td></tr>
+      <tr><td>CompeteAI</td><td>餐厅/顾客</td><td>多家</td><td>竞争涌现策略</td><td>★★★★ 分销者价格战</td></tr>
+      <tr><td>EconAgent</td><td>宏观经济</td><td>多</td><td>异质 LLM Agent ABM</td><td>★★★ 大盘级</td></tr>
+      <tr><td>AgentSociety</td><td>社会</td><td>10,000+</td><td>心理学理论 + 实验台</td><td>★★★★ 可复用平台</td></tr>
+      <tr><td>TwinMarket</td><td>金融市场</td><td>多</td><td>认知偏差 + 泡沫</td><td>★★★ 爆品跟风</td></tr>
+      <tr><td>InvAgent</td><td>多级库存</td><td>多</td><td>LLM 驱动补货</td><td>★★★★ 分销库存</td></tr>
+      <tr><td>Magentic Marketplace</td><td>双边市场</td><td>多</td><td>福利/公平/偏置</td><td>★★★★★ 最贴近 B2B</td></tr>
+      <tr><td>AgenticPay</td><td>议价</td><td>1-N / N-N</td><td>110+ 议价任务</td><td>★★★★★ 分销议价</td></tr>
+      <tr><td>Virtual-Taobao</td><td>淘宝</td><td>亿级行为</td><td>GAN-SD + MAIL + ANC</td><td>★★★★★ 中文淘宝先例</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============== 9. DESIGN ============== -->
+<section id="design">
+  <h2>9. 针对 1688→淘宝 分销场景的研究切入点建议</h2>
+
+  <div class="framework-box">
+    <h3>切入点 A：分销者 Agent 的"选品—铺货—动销"拟真</h3>
+    <ol>
+      <li><strong>基座架构</strong>：Generative Agents 的记忆/反思/规划 + Shop-R1 的"理由+动作"分解。</li>
+      <li><strong>Persona 来源</strong>：参考 PAARS / SimUSER，从脱敏的 1688 分销订单中聚类出若干分销者画像（如"爆品猎手"、"长尾铺货主"、"垂直精选主"）。</li>
+      <li><strong>评估</strong>：PAARS 的种群分布对齐 + Virtual-Taobao 的在线 A/B 思路。</li>
+    </ol>
+  </div>
+
+  <div class="framework-box">
+    <h3>切入点 B：1688 供应商 ↔ 分销者的双边议价</h3>
+    <ol>
+      <li><strong>环境</strong>：Magentic Marketplace 作为沙盒，改造为"分销寻货—样品—议价—下单"四阶段。</li>
+      <li><strong>议价</strong>：AgenticPay 的 1-to-N 设置（一个分销者同时对多个供应商）。</li>
+      <li><strong>研究问题</strong>：first-proposal bias 是否在中文 1688 情境下也存在？</li>
+    </ol>
+  </div>
+
+  <div class="framework-box">
+    <h3>切入点 C：从 1688 选品到淘宝转化的"端到端因果链"</h3>
+    <ol>
+      <li><strong>上游</strong>：分销者 Agent 在 1688 基于 Shop-R1/Customer-R1 做选品。</li>
+      <li><strong>中游</strong>：Agent 做定价、主图、上架（可作为 LLM 工具调用）。</li>
+      <li><strong>下游</strong>：淘宝买家 Agent 群（Agent4Rec / RecAgent 架构）消费并反馈。</li>
+      <li><strong>意义</strong>：可做"商品流通效率"、"分销加价率 vs 转化率"等以前无法仿真的经济学问题。</li>
+    </ol>
+  </div>
+
+  <div class="framework-box">
+    <h3>切入点 D：生态级"政策沙盒"</h3>
+    <ol>
+      <li><strong>环境</strong>：AgentSociety 或 EconAgent 作为大盘仿真台。</li>
+      <li><strong>干预</strong>：1688 补贴、代发费用、分销协议条款变化。</li>
+      <li><strong>输出</strong>：宏观 GMV、分销者存活率、价格弹性、爆品扩散速度。</li>
+    </ol>
+  </div>
+
+  <div class="framework-box">
+    <h3>建议的评估分层（写论文时能吃的"方法论分"）</h3>
+    <ol>
+      <li><strong>个体层</strong>：Agent 动作预测准确率、轨迹 BLEU / Rouge（Shop-R1 / Customer-R1 的做法）。</li>
+      <li><strong>分布层</strong>：PAARS 的种群级分布距离（品类分布、价格分布、下单间隔分布）。</li>
+      <li><strong>因果层</strong>：对若干已知现象做"自然实验"复现（跟风爆品、平台促销、断货传导）。</li>
+      <li><strong>线上层</strong>（最硬）：若有条件，像 Virtual-Taobao / SimUSER 一样做真实 A/B 对照。</li>
+    </ol>
+  </div>
+</section>
+
+</div>
+
+<footer>
+  <p>
+    综述汇总：生成式 Agent · 电商仿真 · 推荐用户模拟 · 市场博弈 · 供应链 · 议价协议 · 阿里相关工作<br/>
+    面向 B2B 仿真研究参考，建议按 <em>第 9 节</em> 的切入点选择论文方向。
+  </p>
+</footer>
+
+</body>
+</html>
