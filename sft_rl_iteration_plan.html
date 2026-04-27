@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SFT + RL 迭代方案 · 面向准确率的简洁算法链路</title>
+<style>
+  :root {
+    --bg: #0f1216;
+    --panel: #161b22;
+    --panel-2: #1c232d;
+    --border: #2a3441;
+    --text: #e6edf3;
+    --muted: #9aa7b2;
+    --accent: #5b8cff;
+    --accent-2: #7ee787;
+    --warn: #f0a14f;
+    --danger: #ff7b72;
+    --code-bg: #0b0f14;
+    --chip: #243041;
+    --chip-hi: #2a3b56;
+    --shadow: 0 6px 24px rgba(0,0,0,.35);
+  }
+  * { box-sizing: border-box; }
+  html, body { background: var(--bg); color: var(--text); margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft Yahei", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.75;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    color: #ffd580;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.92em;
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-size: 0.9em;
+    color: #d7e0ea;
+  }
+  .container {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 32px 28px 96px;
+  }
+
+  header.hero {
+    padding: 30px 28px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: linear-gradient(180deg, #1a2331 0%, #141a22 100%);
+    box-shadow: var(--shadow);
+    margin-bottom: 28px;
+  }
+  header.hero h1 {
+    margin: 0 0 6px;
+    font-size: 26px;
+    letter-spacing: 0.3px;
+  }
+  header.hero .subtitle {
+    color: var(--muted);
+    font-size: 14px;
+  }
+  header.hero .meta {
+    margin-top: 14px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .chip {
+    display: inline-block;
+    padding: 4px 10px;
+    background: var(--chip);
+    color: var(--text);
+    border-radius: 999px;
+    font-size: 12px;
+    border: 1px solid var(--border);
+  }
+  .chip.accent { background: var(--chip-hi); color: #bcd0ff; }
+  .chip.good { background: #1e2f22; color: #9ee8a5; border-color: #2f5a39; }
+  .chip.warn { background: #2e2414; color: #ffd08a; border-color: #5a4323; }
+
+  nav.toc {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+  }
+  nav.toc h3 { margin: 0 0 8px; font-size: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px;}
+  nav.toc ol { margin: 0; padding-left: 22px; }
+  nav.toc li { margin: 3px 0; }
+
+  section.card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px 26px;
+    margin-bottom: 22px;
+    box-shadow: var(--shadow);
+  }
+  section.card h2 {
+    margin: 0 0 12px;
+    font-size: 20px;
+    border-left: 4px solid var(--accent);
+    padding-left: 10px;
+  }
+  section.card h3 {
+    margin: 20px 0 8px;
+    font-size: 16px;
+    color: #cfe1ff;
+  }
+
+  .callout {
+    border-left: 3px solid var(--accent);
+    background: var(--panel-2);
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin: 12px 0;
+    font-size: 14.5px;
+  }
+  .callout.good { border-color: var(--accent-2); }
+  .callout.warn { border-color: var(--warn); }
+  .callout.danger { border-color: var(--danger); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 14px;
+    background: var(--panel-2);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  th, td {
+    border-bottom: 1px solid var(--border);
+    padding: 10px 12px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: #1e2732;
+    color: #bcd0ff;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+  tr:last-child td { border-bottom: none; }
+  td.num, th.num { text-align: right; }
+  .best { color: var(--accent-2); font-weight: 700; }
+  .bad { color: var(--danger); font-weight: 700; }
+
+  .formula {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.95em;
+    overflow-x: auto;
+    color: #e6edf3;
+    margin: 10px 0;
+  }
+
+  ul.clean, ol.clean { padding-left: 22px; }
+  ul.clean li, ol.clean li { margin: 6px 0; }
+
+  .pipeline {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.95em;
+    color: #cfe1ff;
+    overflow-x: auto;
+    line-height: 1.5;
+    white-space: pre;
+  }
+
+  .corecard {
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin: 10px 0;
+  }
+  .corecard .idx {
+    display: inline-block;
+    width: 26px; height: 26px;
+    line-height: 26px;
+    text-align: center;
+    background: var(--chip-hi);
+    color: #bcd0ff;
+    border-radius: 6px;
+    font-weight: 700;
+    margin-right: 8px;
+    font-size: 13px;
+  }
+  .corecard h4 {
+    display: inline;
+    font-size: 15.5px;
+    color: #eaf1fb;
+  }
+  .corecard p, .corecard ul { margin: 8px 0 0; font-size: 14px; }
+
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-right:4px; }
+  .tag.blue { background: #1e2c46; color: #9ebcff; }
+  .tag.green { background: #1c3326; color: #8fe0a0; }
+  .tag.red { background: #3a1f22; color: #ff9e98; }
+  .tag.yellow { background: #3a2e14; color: #ffcf8a; }
+
+  footer {
+    color: var(--muted);
+    text-align: center;
+    font-size: 12px;
+    margin-top: 32px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header class="hero">
+    <h1>SFT + RL 迭代方案（简洁版）</h1>
+    <div class="subtitle">
+      基于 Customer-R1（arXiv 2510.07230）的 SFT → GRPO 最优配方 · 目标：最大化 Next-Action 准确率
+    </div>
+    <div class="meta">
+      <span class="chip accent">SFT</span>
+      <span class="chip accent">GRPO</span>
+      <span class="chip accent">Verifiable Reward</span>
+      <span class="chip good">Goal: Accuracy</span>
+      <span class="chip warn">For 1688→淘宝 分销仿真</span>
+    </div>
+    <div style="margin-top:12px; font-size:14px; color:var(--muted);">
+      主指标：<b>NextAct Exact Match Acc</b>；辅助：Action Type Macro-F1 / Fine-grained Acc / Session Outcome F1。
+    </div>
+  </header>
+
+  <nav class="toc">
+    <h3>目录</h3>
+    <ol>
+      <li><a href="#s1">1. 整体流水线（一图串起来）</a></li>
+      <li><a href="#s2">2. 算法链路的 6 件核心事情</a></li>
+      <li><a href="#s3">3. 推荐训练顺序（简明时间线）</a></li>
+      <li><a href="#s4">4. 评测口径（一次性装到位）</a></li>
+      <li><a href="#s5">5. 三条最容易踩坑的经验</a></li>
+    </ol>
+  </nav>
+
+  <!-- S1 -->
+  <section id="s1" class="card">
+    <h2>1. 整体流水线</h2>
+    <div class="pipeline">原始用户 trace
+      │
+      ▼
+[阶段 0] 数据预处理 + Rationale 合成
+      │
+      ▼
+[阶段 1] SFT 冷启（token-level CE）─────┐
+      │                                │ 冻结 checkpoint，用作
+      ▼                                │ RL 初始化 + KL 参考 π_ref
+[阶段 2] GRPO RL 精调 ◄─────────────────┘
+      │   reward = w(a) · R_action + R_format
+      ▼
+[阶段 3] 评测 + 错误分析 + Reward/数据回流
+      │
+      └── 迭代（Phase 2 ~ 3 循环 2~3 轮即收敛）</div>
+
+    <div class="callout">
+      <b>核心取向：</b>SFT 打底（拿群体分布），RL 上分（啃难例）。<b>不要跳过任一阶段</b>——纯 RL 冷启在论文中只有 24.72%，SFT 直接到 35.14%，SFT+RL 拉到 <b>39.58%</b>。
+    </div>
+  </section>
+
+  <!-- S2 -->
+  <section id="s2" class="card">
+    <h2>2. 算法链路的 6 件核心事情</h2>
+
+    <div class="corecard">
+      <span class="idx">1</span><h4>构造可学习的 schema（把准确率变成可验证事件）</h4>
+      <ul class="clean">
+        <li><b>动作空间定长化</b>：每个 action type 明确必需属性（如 <code>click.element_name</code>、<code>input.element_name + text</code>）。没有 schema 就没有 reward。</li>
+        <li><b>强制输出 <code>rationale → action</code> JSON</b>：rationale 提供软 CoT，action 提供硬校验锚点。</li>
+        <li><b>Fine-grained 子类提前定义</b>（如 click 的 13 个子类），供 reward 加权 + Fine-grained Acc 评测复用。</li>
+      </ul>
+      <p style="color:var(--muted); font-size:13px;">为什么重要：NextAct 是"属性全中才算对"的严口径，schema 不干净 reward 就是噪声。</p>
+    </div>
+
+    <div class="corecard">
+      <span class="idx">2</span><h4>数据准备 + Rationale Augmentation</h4>
+      <ul class="clean">
+        <li>缺失 rationale 用 <code>claude-3.5-sonnet</code> / <code>GPT-4o</code> 条件 "HTML + 真实 action" 合成（论文同款做法）。</li>
+        <li><b>长 HTML 动态截断</b>：最近几步保留完整 HTML，早期只留 action + rationale，压到 65k tokens。</li>
+        <li><b>难例/稀有动作上采样</b>：<code>input</code> / <code>purchase</code> / <code>terminate</code> 专门加权，对抗 86% click 主导的类别不平衡。</li>
+      </ul>
+    </div>
+
+    <div class="corecard">
+      <span class="idx">3</span><h4>SFT 冷启（群体层拟合）</h4>
+      <ul class="clean">
+        <li>Loss：token-level Cross-Entropy；Backbone：<b>Qwen2.5-7B-Instruct-1M</b>（论文实测 3B 会崩 Outcome F1）。</li>
+        <li>配置：<code>AdamW, lr=1e-5, warmup=150, steps=2000, bs=64</code>。</li>
+        <li><b>目的</b>：为 RL 提供一个合理起点策略 + 一个可信的 <code>π_ref</code>。</li>
+      </ul>
+    </div>
+
+    <div class="corecard">
+      <span class="idx">4</span><h4>Reward 设计（决定 RL 学不学得动的关键）</h4>
+      <div class="formula">R = w(â) · R<sub>action</sub> &nbsp;+&nbsp; R<sub>format</sub></div>
+      <ul class="clean">
+        <li><b>R<sub>action</sub></b>：action type + 所有必需属性<b>完全一致</b>才得 1；否则 0。</li>
+        <li><b>R<sub>format</sub></b>：JSON schema 校验通过才得 1。</li>
+        <li><b>w(â) 难度加权</b>（对抗长尾最有效的招）：</li>
+      </ul>
+      <table>
+        <thead><tr><th>动作</th><th class="num">权重</th></tr></thead>
+        <tbody>
+          <tr><td>正确 <code>input</code>（稀有 + 信息密集）</td><td class="num best">2000</td></tr>
+          <tr><td>正确大多数 <code>click</code> 子类</td><td class="num">1000</td></tr>
+          <tr><td>正确 <code>click: product_option</code></td><td class="num">10</td></tr>
+          <tr><td>正确 <code>click: review / search</code>（最高频）</td><td class="num">1</td></tr>
+          <tr><td>正确 <code>terminate</code></td><td class="num">1</td></tr>
+          <tr><td>错误 <code>click</code>（SFT+RL 阶段）</td><td class="num bad">−1</td></tr>
+          <tr><td>错误 <code>click</code>（纯 RL 阶段）</td><td class="num">0（负号会失稳）</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="corecard">
+      <span class="idx">5</span><h4>GRPO RL 精调（从 SFT checkpoint 起跑）</h4>
+      <div class="formula">J(θ) = E[ (1/G) Σᵢ (1/|oᵢ|) Σₜ min(rᵢ,ₜ · Ãᵢ, clip(rᵢ,ₜ, 1−ε, 1+ε) · Ãᵢ) − β · D<sub>KL</sub>(π<sub>θ</sub> ‖ π<sub>ref</sub>) ]</div>
+      <ul class="clean">
+        <li>每个 prompt 采样 <b>n 个 rollout</b>，组内计算相对优势 <code>Ãᵢ</code>，无需 value network。</li>
+        <li>训练：<code>VERL + Megatron</code>，tensor parallel + context parallel + activation checkpoint。</li>
+        <li>参数：<code>2 epochs, bs=64, 8×8 A100</code>；<b>KL 系数 β 建议 0.01 ~ 0.05</b>（太小跑偏，太大退化回 SFT）。</li>
+      </ul>
+    </div>
+
+    <div class="corecard">
+      <span class="idx">6</span><h4>迭代回流（每轮必做）</h4>
+      <p><b>错误切片</b>：按 action 细粒度子类 + 按用户 archetype 切出"低于均值"的 bucket。</p>
+      <p><b>原因归类 → 对应修法</b>：</p>
+      <table>
+        <thead><tr><th>错误类型</th><th>修法</th></tr></thead>
+        <tbody>
+          <tr><td>格式错</td><td>加重 <code>R_format</code> 的罚项；或在 SFT 阶段增加 schema 对齐样本</td></tr>
+          <tr><td>Action type 误分类</td><td>SFT 语料 class-balanced 重采样</td></tr>
+          <tr><td>属性错（element_name 错位）</td><td>HTML 表示增强：加 DOM 结构特征 / 外部 selector</td></tr>
+          <tr><td>稀有动作不敢出</td><td>继续拉大对应 <code>w(â)</code> 权重</td></tr>
+        </tbody>
+      </table>
+      <p><b>下一轮</b>：先 SFT 吸收新样本（或只 replay 错例），再 GRPO 精调；<b>2~3 轮即收敛</b>。</p>
+    </div>
+  </section>
+
+  <!-- S3 -->
+  <section id="s3" class="card">
+    <h2>3. 推荐训练顺序</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Phase</th>
+          <th>目标</th>
+          <th>预期指标</th>
+          <th>产出</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>P0 预处理</td><td>schema + rationale 合成 + 数据切分</td><td>—</td><td>训练/验证 jsonl</td></tr>
+        <tr><td>P1 SFT v1</td><td>学好主流分布</td><td>NextAct ≥ 35%</td><td><code>ckpt_sft_v1</code></td></tr>
+        <tr><td>P2 GRPO v1</td><td>难例上分</td><td>NextAct ≥ 39%</td><td><code>ckpt_rl_v1</code></td></tr>
+        <tr><td>P3 错误分析</td><td>找 Top-5 失分桶</td><td>—</td><td>错例集 + reward/数据调整方案</td></tr>
+        <tr><td>P4 SFT v2</td><td>在错例上继续拟合</td><td>NextAct 微涨</td><td><code>ckpt_sft_v2</code></td></tr>
+        <tr><td>P5 GRPO v2</td><td>难度权重 + β 微调</td><td>NextAct ≥ 41%</td><td><code>ckpt_rl_v2</code></td></tr>
+        <tr><td>P6 冻结评测</td><td>全量 benchmark</td><td>Final</td><td>提交模型</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- S4 -->
+  <section id="s4" class="card">
+    <h2>4. 评测口径（一次性装到位）</h2>
+    <ol class="clean">
+      <li><b>NextAct Acc</b>（主指标，exact match）</li>
+      <li><b>Action Type Macro-F1</b>（类别平衡性）</li>
+      <li><b>Fine-grained Type Acc</b>（子类细度）</li>
+      <li><b>Session Outcome F1</b>（全局意图：是否下单 / 终止）</li>
+      <li><b>Format Valid Rate</b>（诊断指标，应稳定 &gt; 99%）</li>
+      <li><b>Per-user Acc 分布 + Persona-swap rate</b>（1w persona 场景必加，防群体化坍缩）</li>
+    </ol>
+    <div class="callout warn">
+      <b>务必 Day 1 就装好评测 harness</b>。指标如果是后补的，调参时就会只盯 NextAct 做 overfit，Macro-F1 / Outcome 会悄悄掉。
+    </div>
+  </section>
+
+  <!-- S5 -->
+  <section id="s5" class="card">
+    <h2>5. 三条最容易踩坑的经验</h2>
+    <div class="callout danger">
+      <b>坑 1：不要跳过 SFT。</b> 纯 RL 冷启 reward 稀疏到训不动；Customer-R1 自己也给了反例（24.72% vs 39.58%）。
+    </div>
+    <div class="callout danger">
+      <b>坑 2：不要让所有正确动作等权奖励。</b> 会立刻退化成"一直点评论/搜索"。一定要用难度加权把稀有动作（input）抬到 2000，高频动作（click review/search）压到 1。
+    </div>
+    <div class="callout danger">
+      <b>坑 3：负奖励只在 SFT+RL 阶段加。</b> 纯 RL 阶段加负号会震荡；先 SFT 稳住策略，再放负号惩罚错误 click。
+    </div>
+  </section>
+
+  <footer>
+    迭代方案文档 · 基于 Customer-R1（arXiv 2510.07230） · 与 <code>customer_r1_deep_dive.html</code> / <code>personalization_vs_population_collapse.html</code> 配套阅读
+  </footer>
+</div>
+</body>
+</html>
