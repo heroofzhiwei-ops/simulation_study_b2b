@@ -232,9 +232,9 @@
 <div class="container">
 
   <header class="hero">
-    <h1>SFT + RL 迭代方案（简洁版）</h1>
+    <h1>SFT → RL 实操方案</h1>
     <div class="subtitle">
-      基于 Customer-R1（arXiv 2510.07230）的 SFT → GRPO 最优配方 · 目标：最大化 Next-Action 准确率
+      照着 Customer-R1 的路子把 SFT → GRPO 跑起来，围绕 NextAct Exact Match 反复迭代，直到把准确率顶到头。
     </div>
     <div class="meta">
       <span class="chip accent">SFT</span>
@@ -244,24 +244,28 @@
       <span class="chip warn">For 1688→淘宝 分销仿真</span>
     </div>
     <div style="margin-top:12px; font-size:14px; color:var(--muted);">
-      主指标：<b>NextAct Exact Match Acc</b>；辅助：Action Type Macro-F1 / Fine-grained Acc / Session Outcome F1。
+      只盯一个主指标：<b>NextAct Exact Match</b>。其余几个（Action Type Macro-F1 / Fine-grained Acc / Session Outcome F1）用来诊断，不用来调参。
     </div>
   </header>
 
   <nav class="toc">
     <h3>目录</h3>
     <ol>
-      <li><a href="#s1">1. 整体流水线（一图串起来）</a></li>
-      <li><a href="#s2">2. 算法链路的 6 件核心事情</a></li>
-      <li><a href="#s3">3. 推荐训练顺序（简明时间线）</a></li>
-      <li><a href="#s4">4. 评测口径（一次性装到位）</a></li>
-      <li><a href="#s5">5. 三条最容易踩坑的经验</a></li>
+      <li><a href="#s1">1. 一张图看懂整条流水线</a></li>
+      <li><a href="#s2">2. 这条链路上真正要抠的 6 件事</a></li>
+      <li><a href="#s3">3. 从 P0 到 P6 的跑法</a></li>
+      <li><a href="#s4">4. 评测指标与它们各自管什么</a></li>
+      <li><a href="#s5">5. 我踩过和看别人踩过的 3 个坑</a></li>
     </ol>
   </nav>
 
   <!-- S1 -->
   <section id="s1" class="card">
-    <h2>1. 整体流水线</h2>
+    <h2>1. 一张图看懂整条流水线</h2>
+    <p style="color:var(--muted); font-size:14px; margin-top:-4px;">
+      训练分两段：SFT 把群体分布吃进去，RL 用可验证奖励啃剩下的难例。
+      两段之间 SFT 的 checkpoint 兼做 RL 起点和 KL 参考——这一点省下的时间最多。
+    </p>
     <div class="pipeline">原始用户 trace
       │
       ▼
@@ -279,49 +283,53 @@
       └── 迭代（Phase 2 ~ 3 循环 2~3 轮即收敛）</div>
 
     <div class="callout">
-      <b>核心取向：</b>SFT 打底（拿群体分布），RL 上分（啃难例）。<b>不要跳过任一阶段</b>——纯 RL 冷启在论文中只有 24.72%，SFT 直接到 35.14%，SFT+RL 拉到 <b>39.58%</b>。
+      论文里的数字已经把话说死了：纯 RL 冷启 24.72%，光 SFT 35.14%，两段拼起来 <b>39.58%</b>。
+      跳过 SFT 直接 RL 基本等于自残；别省这一步。
     </div>
   </section>
 
   <!-- S2 -->
   <section id="s2" class="card">
-    <h2>2. 算法链路的 6 件核心事情</h2>
+    <h2>2. 这条链路上真正要抠的 6 件事</h2>
+    <p style="color:var(--muted); font-size:14px; margin-top:-4px;">
+      每一件如果只做到 80% 都会在最终指标上扣两三个点；合起来就是 Customer-R1 从 7.32% 能拉到近 40% 的原因。
+    </p>
 
     <div class="corecard">
-      <span class="idx">1</span><h4>构造可学习的 schema（把准确率变成可验证事件）</h4>
+      <span class="idx">1</span><h4>先把 action schema 写死</h4>
       <ul class="clean">
-        <li><b>动作空间定长化</b>：每个 action type 明确必需属性（如 <code>click.element_name</code>、<code>input.element_name + text</code>）。没有 schema 就没有 reward。</li>
-        <li><b>强制输出 <code>rationale → action</code> JSON</b>：rationale 提供软 CoT，action 提供硬校验锚点。</li>
-        <li><b>Fine-grained 子类提前定义</b>（如 click 的 13 个子类），供 reward 加权 + Fine-grained Acc 评测复用。</li>
+        <li>每个 action 类型的必填字段一次性定完：<code>click.element_name</code>、<code>input.element_name + text</code>、<code>terminate</code>。字段没定义的动作，reward 就没法验证，RL 也无从学起。</li>
+        <li>输出强制 <code>rationale → action</code> 的 JSON。rationale 让模型先说理由，相当于把 CoT 写进格式里；action 字段是 exact-match 的比对锚点。</li>
+        <li>click 这种大类要提前拆到子类级（论文拆了 13 个），后面 reward 加权、Fine-grained 评测都直接复用这份拆分。</li>
       </ul>
-      <p style="color:var(--muted); font-size:13px;">为什么重要：NextAct 是"属性全中才算对"的严口径，schema 不干净 reward 就是噪声。</p>
+      <p style="color:var(--muted); font-size:13px;">底层逻辑：NextAct 是"属性全中才算对"，schema 不稳奖励信号就是噪声，RL 只会学到格式。</p>
     </div>
 
     <div class="corecard">
-      <span class="idx">2</span><h4>数据准备 + Rationale Augmentation</h4>
+      <span class="idx">2</span><h4>把数据先收拾干净再谈训练</h4>
       <ul class="clean">
-        <li>缺失 rationale 用 <code>claude-3.5-sonnet</code> / <code>GPT-4o</code> 条件 "HTML + 真实 action" 合成（论文同款做法）。</li>
-        <li><b>长 HTML 动态截断</b>：最近几步保留完整 HTML，早期只留 action + rationale，压到 65k tokens。</li>
-        <li><b>难例/稀有动作上采样</b>：<code>input</code> / <code>purchase</code> / <code>terminate</code> 专门加权，对抗 86% click 主导的类别不平衡。</li>
-      </ul>
-    </div>
-
-    <div class="corecard">
-      <span class="idx">3</span><h4>SFT 冷启（群体层拟合）</h4>
-      <ul class="clean">
-        <li>Loss：token-level Cross-Entropy；Backbone：<b>Qwen2.5-7B-Instruct-1M</b>（论文实测 3B 会崩 Outcome F1）。</li>
-        <li>配置：<code>AdamW, lr=1e-5, warmup=150, steps=2000, bs=64</code>。</li>
-        <li><b>目的</b>：为 RL 提供一个合理起点策略 + 一个可信的 <code>π_ref</code>。</li>
+        <li>历史 trace 里缺 rationale 的样本占大头。直接丢会少一大半，论文的做法是用 Claude / GPT-4o 拿 "HTML + 真实 action" 反推一个合理 rationale 补进去——把它当作弱监督就够了。</li>
+        <li>HTML 太长塞不进上下文，粗暴 truncate 会把关键页面截掉。实操是"近几步保全量 HTML，远的只留 action + rationale"，整段压在 65k tokens 里。</li>
+        <li>click 占了 86%，input / purchase / terminate 加起来不到 14%。训练集一定要上采样稀有动作，否则模型会默认"看到什么都点"。</li>
       </ul>
     </div>
 
     <div class="corecard">
-      <span class="idx">4</span><h4>Reward 设计（决定 RL 学不学得动的关键）</h4>
+      <span class="idx">3</span><h4>SFT 是 RL 的脚手架，不是可选项</h4>
+      <ul class="clean">
+        <li>Token-level CE 就行，没什么花活。Backbone 选 <b>Qwen2.5-7B-Instruct-1M</b>——3B 在 Session Outcome 上会直接崩成 3.97%，不是调参问题，是容量不够。</li>
+        <li>训练参数可以照抄论文：<code>AdamW, lr=1e-5, warmup=150, steps=2000, bs=64</code>，不需要自己重新搜。</li>
+        <li>SFT 产出的 checkpoint 要留住：既是 RL 起跑点，也是 GRPO 里算 KL 的 <code>π_ref</code>。两件事同一个权重。</li>
+      </ul>
+    </div>
+
+    <div class="corecard">
+      <span class="idx">4</span><h4>Reward 才是 RL 阶段唯一值得反复改的东西</h4>
       <div class="formula">R = w(â) · R<sub>action</sub> &nbsp;+&nbsp; R<sub>format</sub></div>
       <ul class="clean">
-        <li><b>R<sub>action</sub></b>：action type + 所有必需属性<b>完全一致</b>才得 1；否则 0。</li>
-        <li><b>R<sub>format</sub></b>：JSON schema 校验通过才得 1。</li>
-        <li><b>w(â) 难度加权</b>（对抗长尾最有效的招）：</li>
+        <li><b>R<sub>action</sub></b>：action type 和所有必填字段必须全中才给 1，缺一不可。这是保证主指标有意义的唯一办法。</li>
+        <li><b>R<sub>format</sub></b>：JSON 校验过才给 1。别小看这一项，格式崩了 RL 会直接发散。</li>
+        <li><b>w(â)</b>：按稀有度拉开权重。不加权的 RL 会秒退化成 "只做最常见的 click"，加权是把这件事从结构上堵住——下面这张表就是原论文的设置。</li>
       </ul>
       <table>
         <thead><tr><th>动作</th><th class="num">权重</th></tr></thead>
@@ -338,35 +346,38 @@
     </div>
 
     <div class="corecard">
-      <span class="idx">5</span><h4>GRPO RL 精调（从 SFT checkpoint 起跑）</h4>
+      <span class="idx">5</span><h4>GRPO 的关键不在公式，在 β</h4>
       <div class="formula">J(θ) = E[ (1/G) Σᵢ (1/|oᵢ|) Σₜ min(rᵢ,ₜ · Ãᵢ, clip(rᵢ,ₜ, 1−ε, 1+ε) · Ãᵢ) − β · D<sub>KL</sub>(π<sub>θ</sub> ‖ π<sub>ref</sub>) ]</div>
       <ul class="clean">
-        <li>每个 prompt 采样 <b>n 个 rollout</b>，组内计算相对优势 <code>Ãᵢ</code>，无需 value network。</li>
-        <li>训练：<code>VERL + Megatron</code>，tensor parallel + context parallel + activation checkpoint。</li>
-        <li>参数：<code>2 epochs, bs=64, 8×8 A100</code>；<b>KL 系数 β 建议 0.01 ~ 0.05</b>（太小跑偏，太大退化回 SFT）。</li>
+        <li>每个 prompt 采 n 个 rollout，组内算相对优势 <code>Ãᵢ</code>——这是 GRPO 相对 PPO 最省事的一点，不用再养一个 value network。</li>
+        <li>工程栈就用 <code>VERL + Megatron</code>，tensor parallel + context parallel + activation checkpoint 全开，8×8 A100 起步。2 epochs、bs=64 是个合理起点。</li>
+        <li><b>β 才是需要认真扫的</b>：太小模型会跑偏 SFT 得到的合理分布（reward hacking），太大等于把 RL 退化回 SFT。建议在 <code>0.01 ~ 0.05</code> 之间扫 3 个点，看哪个在 NextAct 和 Format Valid 上都不掉。</li>
       </ul>
     </div>
 
     <div class="corecard">
-      <span class="idx">6</span><h4>迭代回流（每轮必做）</h4>
-      <p><b>错误切片</b>：按 action 细粒度子类 + 按用户 archetype 切出"低于均值"的 bucket。</p>
-      <p><b>原因归类 → 对应修法</b>：</p>
+      <span class="idx">6</span><h4>错一次分析一次，不要堆着一起</h4>
+      <p>每轮 GRPO 训完，先按 action 细粒度子类切一遍准确率，再按用户 archetype 切一遍，找掉分最狠的桶。</p>
+      <p>踩出来的错通常能归成这几类，对应修法基本是固定的：</p>
       <table>
-        <thead><tr><th>错误类型</th><th>修法</th></tr></thead>
+        <thead><tr><th>错法</th><th>下一轮怎么改</th></tr></thead>
         <tbody>
-          <tr><td>格式错</td><td>加重 <code>R_format</code> 的罚项；或在 SFT 阶段增加 schema 对齐样本</td></tr>
-          <tr><td>Action type 误分类</td><td>SFT 语料 class-balanced 重采样</td></tr>
-          <tr><td>属性错（element_name 错位）</td><td>HTML 表示增强：加 DOM 结构特征 / 外部 selector</td></tr>
-          <tr><td>稀有动作不敢出</td><td>继续拉大对应 <code>w(â)</code> 权重</td></tr>
+          <tr><td>输出格式崩</td><td>把 <code>R_format</code> 的罚项加重，同时在 SFT 数据里补一批 schema 对齐样本</td></tr>
+          <tr><td>action type 整个搞错</td><td>SFT 语料按类做重采样，把稀有 type 往上拉到 20% 以上</td></tr>
+          <tr><td>type 对但 element_name 选错位</td><td>HTML 表示要加强，比如补 DOM 层级、selector path，而不是继续调 reward</td></tr>
+          <tr><td>明明该出稀有动作但模型不敢出</td><td>把该动作在 <code>w(â)</code> 里的权重再抬一档</td></tr>
         </tbody>
       </table>
-      <p><b>下一轮</b>：先 SFT 吸收新样本（或只 replay 错例），再 GRPO 精调；<b>2~3 轮即收敛</b>。</p>
+      <p>下一轮的推进顺序是固定的：先 SFT 把新增/重采样的样本吃掉，再 GRPO 精调。别跳步。通常 2~3 轮就能收敛，之后继续训边际很小，该停就停。</p>
     </div>
   </section>
 
   <!-- S3 -->
   <section id="s3" class="card">
-    <h2>3. 推荐训练顺序</h2>
+    <h2>3. 从 P0 到 P6 的跑法</h2>
+    <p style="color:var(--muted); font-size:14px; margin-top:-4px;">
+      不必把整条流程一次跑完。第一遍跑到 P2 有个数再说；P3 的错误分析做完，P4/P5 的改法自然就有了方向。
+    </p>
     <table>
       <thead>
         <tr>
@@ -390,36 +401,46 @@
 
   <!-- S4 -->
   <section id="s4" class="card">
-    <h2>4. 评测口径（一次性装到位）</h2>
+    <h2>4. 评测指标与它们各自管什么</h2>
+    <p style="color:var(--muted); font-size:14px; margin-top:-4px;">
+      别只看一个 aggregate 数字，每个指标都在盯一种"退化方式"。
+    </p>
     <ol class="clean">
-      <li><b>NextAct Acc</b>（主指标，exact match）</li>
-      <li><b>Action Type Macro-F1</b>（类别平衡性）</li>
-      <li><b>Fine-grained Type Acc</b>（子类细度）</li>
-      <li><b>Session Outcome F1</b>（全局意图：是否下单 / 终止）</li>
-      <li><b>Format Valid Rate</b>（诊断指标，应稳定 &gt; 99%）</li>
-      <li><b>Per-user Acc 分布 + Persona-swap rate</b>（1w persona 场景必加，防群体化坍缩）</li>
+      <li><b>NextAct Acc</b> — 主指标，所有属性必须全中；调参只跟它对齐。</li>
+      <li><b>Action Type Macro-F1</b> — 看模型有没有偷懒只做高频 click；这个指标掉了说明 reward 加权没起作用。</li>
+      <li><b>Fine-grained Type Acc</b> — 看 click 到子类是否分得清；跟 HTML 表示质量强相关。</li>
+      <li><b>Session Outcome F1</b> — 看整段会话最后是下单还是终止；对 persona 和全局意图最敏感。</li>
+      <li><b>Format Valid Rate</b> — 本该稳定在 99% 以上；跌了说明格式 reward 或 KL 出了问题，先别看其它指标。</li>
+      <li><b>Per-user Acc 分布 + Persona-swap</b> — 1w persona 场景专门加的，防群体化坍缩；只看 aggregate 看不出来。</li>
     </ol>
     <div class="callout warn">
-      <b>务必 Day 1 就装好评测 harness</b>。指标如果是后补的，调参时就会只盯 NextAct 做 overfit，Macro-F1 / Outcome 会悄悄掉。
+      这套指标第一天就要全装上，<b>不要后补</b>。只盯 NextAct 调参的话，Macro-F1 和 Outcome 会悄悄掉，等发现就晚了。
     </div>
   </section>
 
   <!-- S5 -->
   <section id="s5" class="card">
-    <h2>5. 三条最容易踩坑的经验</h2>
+    <h2>5. 我踩过和看别人踩过的 3 个坑</h2>
+
     <div class="callout danger">
-      <b>坑 1：不要跳过 SFT。</b> 纯 RL 冷启 reward 稀疏到训不动；Customer-R1 自己也给了反例（24.72% vs 39.58%）。
+      <b>① 省 SFT 这一步。</b>
+      "反正 RL 会自己学出来吧"——不会。reward 在冷启阶段太稀疏，模型连格式都学不稳，loss 曲线会一直震。
+      Customer-R1 自己的数据：纯 RL 到顶 24.72%，而先 SFT 再 RL 拉到 39.58%，差的这 15 个点基本都是冷启损失的。
     </div>
     <div class="callout danger">
-      <b>坑 2：不要让所有正确动作等权奖励。</b> 会立刻退化成"一直点评论/搜索"。一定要用难度加权把稀有动作（input）抬到 2000，高频动作（click review/search）压到 1。
+      <b>② 所有正确动作等权奖励。</b>
+      看起来"公平"，结果模型会在 3 个 epoch 内退化成"狂点 review / search"——因为这两类高频动作的绝对正确次数最多，不加权的话总奖励最高。
+      必须按稀有度人为拉开：<code>input = 2000</code>、<code>click review/search = 1</code>，让模型发现去做稀有动作才更划算。
     </div>
     <div class="callout danger">
-      <b>坑 3：负奖励只在 SFT+RL 阶段加。</b> 纯 RL 阶段加负号会震荡；先 SFT 稳住策略，再放负号惩罚错误 click。
+      <b>③ 纯 RL 阶段就放负奖励。</b>
+      冷启时策略本来就抖，再给一个 <code>−1</code> 会让它直接发散；loss 一夜之间炸开。
+      负奖励只在 SFT+RL 联合阶段才打开——那时策略已经基本稳定，-1 能起到"修正边界"的作用而不是"砸锅"。
     </div>
   </section>
 
   <footer>
-    迭代方案文档 · 基于 Customer-R1（arXiv 2510.07230） · 与 <code>customer_r1_deep_dive.html</code> / <code>personalization_vs_population_collapse.html</code> 配套阅读
+    参照 Customer-R1（arXiv 2510.07230）改造的 SFT → GRPO 实操记录 · 与 <code>customer_r1_deep_dive.html</code> / <code>personalization_vs_population_collapse.html</code> 配套读
   </footer>
 </div>
 </body>
