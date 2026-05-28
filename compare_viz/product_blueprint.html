@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>产品蓝图 · BIZ-SIGNAL-AGENT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-base: #ffffff;
+    --bg-canvas: #fafafa;
+    --bg-subtle: #f4f4f5;
+    --bg-muted: #fafafa;
+    --border: #e4e4e7;
+    --border-strong: #d4d4d8;
+    --text-primary: #09090b;
+    --text-secondary: #52525b;
+    --text-tertiary: #71717a;
+    --text-muted: #a1a1aa;
+    --accent: #6366f1;
+    --accent-hover: #4f46e5;
+    --accent-soft: #eef2ff;
+    --accent-text: #4338ca;
+    --accent-border: #c7d2fe;
+    --indigo-50: #eef2ff;
+    --indigo-100: #e0e7ff;
+    --indigo-200: #c7d2fe;
+    --indigo-700: #4338ca;
+    --emerald-50: #ecfdf5;
+    --emerald-100: #d1fae5;
+    --emerald-700: #047857;
+    --rose-50: #fff1f2;
+    --rose-100: #ffe4e6;
+    --rose-700: #be123c;
+    --amber-50: #fffbeb;
+    --amber-100: #fef3c7;
+    --amber-700: #b45309;
+    --mono: 'JetBrains Mono', 'SF Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    background: var(--bg-canvas);
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+    padding: 56px 64px;
+    width: 1600px;
+  }
+  body::before {
+    content:'';
+    position: fixed; inset: 0;
+    background-image: radial-gradient(circle, #e4e4e7 1px, transparent 1px);
+    background-size: 28px 28px;
+    opacity: 0.45;
+    z-index: -1;
+  }
+  body::after {
+    content:'';
+    position: fixed; inset: 0;
+    background: radial-gradient(ellipse 1100px 540px at 50% -120px, rgba(99,102,241,0.08), transparent);
+    z-index: -1;
+  }
+
+  /* === Hero === */
+  .hero {
+    text-align: center;
+    margin-bottom: 56px;
+  }
+  .hero-tag {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--mono);
+    font-size: 11.5px; font-weight: 600;
+    letter-spacing: 0.18em;
+    color: var(--accent-text);
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-border);
+    padding: 6px 16px;
+    border-radius: 100px;
+    margin-bottom: 22px;
+  }
+  .hero-tag .dot {
+    width: 6px; height: 6px;
+    background: var(--accent); border-radius: 50%;
+  }
+  .hero-name {
+    font-family: var(--mono);
+    font-size: 13px; font-weight: 600;
+    letter-spacing: 0.18em;
+    color: var(--text-tertiary);
+    margin-bottom: 12px;
+  }
+  .hero h1 {
+    font-size: 48px; font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -0.035em;
+    line-height: 1.1;
+    margin-bottom: 18px;
+  }
+  .hero h1 .accent { color: var(--accent); }
+  .hero p {
+    font-size: 17px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    max-width: 880px;
+    margin: 0 auto;
+  }
+  .hero p strong {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+
+  /* === Main pipeline === */
+  .pipeline-section {
+    margin-bottom: 48px;
+  }
+  .section-title {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+  .section-tag {
+    font-family: var(--mono);
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.16em;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .section-name {
+    font-size: 20px; font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+  }
+
+  .pipeline-grid {
+    display: grid;
+    grid-template-columns: 280px 60px 1fr 60px 280px;
+    align-items: stretch;
+    gap: 0;
+  }
+
+  /* IO cards */
+  .io-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03), 0 8px 24px rgba(0,0,0,0.03);
+    display: flex;
+    flex-direction: column;
+  }
+  .io-card.input  { border-top: 3px solid var(--accent); }
+  .io-card.output { border-top: 3px solid #10b981; }
+
+  .io-header {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .io-icon {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .input .io-icon  { background: var(--accent-soft);  color: var(--accent-text); }
+  .output .io-icon { background: var(--emerald-50);   color: var(--emerald-700); }
+  .io-label {
+    font-family: var(--mono);
+    font-size: 10.5px; font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .input .io-label  { color: var(--accent-text); }
+  .output .io-label { color: var(--emerald-700); }
+  .io-title {
+    font-size: 14px; font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+    margin-top: 1px;
+  }
+
+  .io-items {
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .io-item {
+    background: var(--bg-muted);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 11px 14px;
+  }
+  .io-item-key {
+    font-family: var(--mono);
+    font-size: 10px; font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .io-item-val {
+    font-size: 13px; font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.005em;
+    line-height: 1.4;
+  }
+  .io-item-val.mono { font-family: var(--mono); }
+  .io-item-sub {
+    font-size: 11.5px;
+    color: var(--text-tertiary);
+    margin-top: 3px;
+  }
+
+  /* Arrows */
+  .arrow-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .arrow-cell svg {
+    width: 60px; height: 22px;
+  }
+  .arrow-line { stroke: var(--accent); stroke-width: 1.5; }
+  .arrow-head { fill: var(--accent); }
+  .arrow-cell.right .arrow-line { stroke: #10b981; }
+  .arrow-cell.right .arrow-head { fill: #10b981; }
+
+  /* === Engine === */
+  .engine-card {
+    background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 28px 30px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03), 0 12px 32px rgba(0,0,0,0.04);
+    position: relative;
+    overflow: hidden;
+  }
+  .engine-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--accent), #ec4899, #10b981);
+  }
+
+  .engine-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-bottom: 16px;
+    margin-bottom: 22px;
+    border-bottom: 1px solid var(--border);
+  }
+  .engine-title-block { display: flex; align-items: center; gap: 12px; }
+  .engine-icon {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+    display: flex; align-items: center; justify-content: center;
+    color: white;
+    box-shadow: 0 2px 8px rgba(99,102,241,0.3);
+  }
+  .engine-title {
+    font-size: 17px; font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.015em;
+  }
+  .engine-sub {
+    font-size: 12.5px;
+    color: var(--text-tertiary);
+    margin-top: 2px;
+  }
+  .engine-meta-pills {
+    display: flex; gap: 8px;
+  }
+  .engine-meta {
+    font-family: var(--mono);
+    font-size: 10px; font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: 4px 10px;
+    border-radius: 4px;
+  }
+  .engine-meta.accent {
+    background: var(--accent-soft);
+    border-color: var(--accent-border);
+    color: var(--accent-text);
+  }
+
+  .stages {
+    display: grid;
+    grid-template-columns: 1fr 24px 1fr 24px 1fr;
+    gap: 0;
+    align-items: stretch;
+  }
+  .stage {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 18px 20px;
+    position: relative;
+  }
+  .stage-rank {
+    position: absolute;
+    top: -10px;
+    left: 16px;
+    background: var(--text-primary);
+    color: white;
+    font-family: var(--mono);
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 0.1em;
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+  .stage-name {
+    font-size: 14px; font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+    margin-top: 4px;
+    margin-bottom: 8px;
+  }
+  .stage-desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.55;
+    margin-bottom: 12px;
+  }
+  .stage-mini {
+    background: var(--bg-subtle);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 10.5px;
+    color: var(--text-tertiary);
+    line-height: 1.5;
+    font-family: var(--mono);
+  }
+
+  /* Stage arrow connectors */
+  .stage-conn {
+    display: flex; align-items: center; justify-content: center;
+  }
+  .stage-conn svg { width: 24px; height: 14px; }
+  .stage-conn .line { stroke: var(--text-muted); stroke-width: 1.5; stroke-dasharray: 2 3; }
+  .stage-conn .head { fill: var(--text-muted); }
+
+  /* === Data Foundation === */
+  .data-foundation {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 28px 32px;
+    margin-bottom: 48px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    position: relative;
+    overflow: hidden;
+  }
+  .data-foundation::before {
+    content: '';
+    position: absolute; top: 0; left: 0; bottom: 0; width: 3px;
+    background: linear-gradient(180deg, var(--accent) 0%, #ec4899 100%);
+  }
+  .data-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 18px;
+  }
+  .data-title-block {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .data-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #1f2937, #111827);
+    display: flex; align-items: center; justify-content: center;
+    color: white;
+  }
+  .data-title {
+    font-size: 16px; font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.015em;
+  }
+  .data-sub {
+    font-size: 12.5px;
+    color: var(--text-tertiary);
+    margin-top: 2px;
+  }
+  .data-stat {
+    font-family: var(--mono);
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--accent-text);
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-border);
+    padding: 5px 12px;
+    border-radius: 100px;
+    text-transform: uppercase;
+  }
+  .data-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 10px;
+  }
+  .data-chip {
+    background: var(--bg-muted);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 12px;
+    text-align: center;
+    transition: all 0.15s;
+  }
+  .data-chip-icon {
+    width: 28px; height: 28px;
+    background: var(--accent-soft);
+    color: var(--accent-text);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 8px;
+  }
+  .data-chip-label {
+    font-size: 12.5px; font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.005em;
+    margin-bottom: 2px;
+  }
+  .data-chip-mono {
+    font-family: var(--mono);
+    font-size: 9.5px; font-weight: 500;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+
+  /* === Value props === */
+  .values-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 18px;
+    margin-bottom: 32px;
+  }
+  .value-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    position: relative;
+  }
+  .value-rank {
+    font-family: var(--mono);
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+  .value-title {
+    font-size: 15px; font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+    margin-bottom: 8px;
+  }
+  .value-desc {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+  .value-desc strong {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+
+  /* Footer === */
+  .footer {
+    text-align: center;
+    margin-top: 16px;
+    padding-top: 28px;
+    border-top: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.12em;
+  }
+  .footer .sep { margin: 0 14px; opacity: 0.5; }
+</style>
+</head>
+<body>
+
+  <!-- =================== HERO =================== -->
+  <div class="hero">
+    <div class="hero-tag">
+      <span class="dot"></span>
+      PRODUCT BLUEPRINT
+    </div>
+    <div class="hero-name">BIZ-SIGNAL-AGENT</div>
+    <h1>商机信号的<span class="accent">个性化泛化</span>推演引擎</h1>
+    <p>把一个抽象的外部商机词，<strong>翻译成 N 个真实买家身份下可执行的搜索 / 选品方向</strong>。
+    传统词向量扩展无法做到的"基于人格的视角分化"，在多 agent 仿真中自然涌现。</p>
+  </div>
+
+  <!-- =================== MAIN PIPELINE =================== -->
+  <div class="pipeline-section">
+    <div class="section-title">
+      <div class="section-tag">CORE PIPELINE</div>
+      <div class="section-name">输入 → 推演 → 输出</div>
+    </div>
+
+    <div class="pipeline-grid">
+      <!-- INPUT -->
+      <div class="io-card input">
+        <div class="io-header">
+          <div class="io-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/>
+            </svg>
+          </div>
+          <div>
+            <div class="io-label">INPUT</div>
+            <div class="io-title">两个极简输入</div>
+          </div>
+        </div>
+        <div class="io-items">
+          <div class="io-item">
+            <div class="io-item-key">USER ID</div>
+            <div class="io-item-val mono">buyer_id: 89215...</div>
+            <div class="io-item-sub">真实 1688 买家</div>
+          </div>
+          <div class="io-item">
+            <div class="io-item-key">SIGNAL</div>
+            <div class="io-item-val">外部商机信号词</div>
+            <div class="io-item-sub">如"新中式" / "巴恩风" / "宋代美学"</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- arrow -->
+      <div class="arrow-cell">
+        <svg viewBox="0 0 60 22">
+          <line class="arrow-line" x1="0" y1="11" x2="48" y2="11"/>
+          <polygon class="arrow-head" points="48,5 60,11 48,17"/>
+        </svg>
+      </div>
+
+      <!-- ENGINE -->
+      <div class="engine-card">
+        <div class="engine-header">
+          <div class="engine-title-block">
+            <div class="engine-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>
+            </div>
+            <div>
+              <div class="engine-title">推演引擎 · Multi-Agent Simulation</div>
+              <div class="engine-sub">三阶段串行 — 身份激活 / 同行交互 / 共识收敛</div>
+            </div>
+          </div>
+          <div class="engine-meta-pills">
+            <span class="engine-meta">7 agents</span>
+            <span class="engine-meta accent">qwen-plus</span>
+          </div>
+        </div>
+
+        <div class="stages">
+          <!-- Stage 1 -->
+          <div class="stage">
+            <div class="stage-rank">STAGE 01</div>
+            <div class="stage-name">身份激活</div>
+            <div class="stage-desc">
+              每个 agent 加载自身 30 天真实行为画像后，独立给出对该商机词的初始判断与衍生表达，确保 N 条声音<strong>从一开始就分化</strong>。
+            </div>
+            <div class="stage-mini">独立反应 · 不互相看见 · 立场 / 衍生词 / 落地 / 顾虑</div>
+          </div>
+
+          <div class="stage-conn">
+            <svg viewBox="0 0 24 14">
+              <line class="line" x1="0" y1="7" x2="16" y2="7"/>
+              <polygon class="head" points="16,2 24,7 16,12"/>
+            </svg>
+          </div>
+
+          <!-- Stage 2 -->
+          <div class="stage">
+            <div class="stage-rank">STAGE 02</div>
+            <div class="stage-name">同行交互</div>
+            <div class="stage-desc">
+              每个 agent 看到其他人的发言后，基于自身身份做<strong>反对 / 补充 / 质疑</strong>三选一回应，强制非赞同型对话，避免群体观点坍缩。
+            </div>
+            <div class="stage-mini">DISAGREE · ADD · QUESTION · 禁止纯赞同</div>
+          </div>
+
+          <div class="stage-conn">
+            <svg viewBox="0 0 24 14">
+              <line class="line" x1="0" y1="7" x2="16" y2="7"/>
+              <polygon class="head" points="16,2 24,7 16,12"/>
+            </svg>
+          </div>
+
+          <!-- Stage 3 -->
+          <div class="stage">
+            <div class="stage-rank">STAGE 03</div>
+            <div class="stage-name">共识收敛</div>
+            <div class="stage-desc">
+              多轮交互后系统聚合每个个体的稳定表达，提取<strong>群体共识词 + 稀有视角</strong>，输出商机词在每个真实身份下被细化的最终表达。
+            </div>
+            <div class="stage-mini">peer-rating · 共识聚合 · 稀有视角抽取</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- arrow -->
+      <div class="arrow-cell right">
+        <svg viewBox="0 0 60 22">
+          <line class="arrow-line" x1="0" y1="11" x2="48" y2="11"/>
+          <polygon class="arrow-head" points="48,5 60,11 48,17"/>
+        </svg>
+      </div>
+
+      <!-- OUTPUT -->
+      <div class="io-card output">
+        <div class="io-header">
+          <div class="io-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+            </svg>
+          </div>
+          <div>
+            <div class="io-label">OUTPUT</div>
+            <div class="io-title">个性化泛化产物</div>
+          </div>
+        </div>
+        <div class="io-items">
+          <div class="io-item">
+            <div class="io-item-key">DERIVED KEYWORDS</div>
+            <div class="io-item-val">个性化衍生搜索词集合</div>
+            <div class="io-item-sub">每词带身份标签 + 落地建议</div>
+          </div>
+          <div class="io-item">
+            <div class="io-item-key">STANCES</div>
+            <div class="io-item-val">个体立场 + 群体分布</div>
+            <div class="io-item-sub">积极 / 观望 / 无关</div>
+          </div>
+          <div class="io-item">
+            <div class="io-item-key">DYNAMICS</div>
+            <div class="io-item-val">共识词 / 稀有视角 / 反对意见</div>
+            <div class="io-item-sub">含每条衍生词溯源</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================== DATA FOUNDATION =================== -->
+  <div class="data-foundation">
+    <div class="data-header">
+      <div class="data-title-block">
+        <div class="data-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <ellipse cx="12" cy="5" rx="9" ry="3"/>
+            <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+          </svg>
+        </div>
+        <div>
+          <div class="data-title">数据基础 · 8 维真实买家全域行为</div>
+          <div class="data-sub">人格化画像由这 8 类真实数据约束构建,保证 agent 反应可被真实行为追溯</div>
+        </div>
+      </div>
+      <div class="data-stat">9998 个真实买家</div>
+    </div>
+
+    <div class="data-grid">
+      <div class="data-chip">
+        <div class="data-chip-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <div class="data-chip-label">询盘内容</div>
+        <div class="data-chip-mono">INQUIRY</div>
+      </div>
+      <div class="data-chip">
+        <div class="data-chip-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </div>
+        <div class="data-chip-label">搜索词</div>
+        <div class="data-chip-mono">QUERY</div>
+      </div>
+      <div class="data-chip">
+        <div class="data-chip-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>
+        </div>
+        <div class="data-chip-label">商详浏览</div>
+        <div class="data-chip-mono">PDP VIEW</div>
+      </div>
+      <div class="data-chip">
+        <div class="data-chip-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        </div>
+        <div class="data-chip-label">图搜信号</div>
+        <div class="data-chip-mono">IMG SEARCH</div>
+      </div>
+      <div class="data-chip">
+        <div class="data-chip-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+        </div>
+        <div class="data-chip-label">视频浏览</div>
+        <div class="data-chip-mono">VIDEO</div>
+      </div>
+      <div class="data-chip">
+        <div class="data-chip-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        </div>
+        <div class="data-chip-label">加购记录</div>
+        <div class="data-chip-mono">CART</div>
+      </div>
+      <div class="data-chip">
+        <div class="data-chip-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        </div>
+        <div class="data-chip-label">店铺浏览</div>
+        <div class="data-chip-mono">SHOP VIEW</div>
+      </div>
+      <div class="data-chip">
+        <div class="data-chip-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        </div>
+        <div class="data-chip-label">商品文案</div>
+        <div class="data-chip-mono">VOICE SAMPLE</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================== VALUE PROPS =================== -->
+  <div class="section-title">
+    <div class="section-tag">VALUE PROPOSITION</div>
+    <div class="section-name">三个核心价值</div>
+  </div>
+  <div class="values-grid">
+    <div class="value-card">
+      <div class="value-rank">01</div>
+      <div class="value-title">真实身份驱动 · 非泛化模板</div>
+      <div class="value-desc">
+        每个 agent 由 30 天<strong>真实买家行为</strong>约束。Agent 的反应可被原始行为追溯,不是 LLM 在通用画像上的拟合产物。
+      </div>
+    </div>
+    <div class="value-card">
+      <div class="value-rank">02</div>
+      <div class="value-title">多视角自然涌现 · 不交集</div>
+      <div class="value-desc">
+        同一商机词在不同身份下生出<strong>几乎不交集的衍生空间</strong>。词向量 / 共现扩展给不出来的"人格化视角分化"。
+      </div>
+    </div>
+    <div class="value-card">
+      <div class="value-rank">03</div>
+      <div class="value-title">可验证可闭环 · 可迭代</div>
+      <div class="value-desc">
+        衍生词可对照 7-30 天后真实站内搜索 / 采购数据做<strong>命中率回测</strong>,形成数据闭环,持续训练强化推演引擎。
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    BIZ-SIGNAL-AGENT
+    <span class="sep">·</span>
+    PRODUCT BLUEPRINT
+    <span class="sep">·</span>
+    1688 商机信号个性化推演引擎
+  </div>
+
+</body>
+</html>
